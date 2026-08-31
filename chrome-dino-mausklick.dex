@@ -1,0 +1,77 @@
+use system:io as io;
+use dex:datatype as dt;
+
+++ Chrome-Dino in DEX – springen mit gedrückter Maustaste auf der Bühne
+
+rec main() do
+
+    rec dinoX init 45;
+    rec dinoY init 230;
+    rec dinoSpeed init 0;
+    rec cactusX init 460;
+    rec score init 0;
+    rec running init true;
+    rec pointer;
+    rec pressed;
+
+    repeat 1,10000 with rec frame do
+
+        io:graphics:getPointer() >> pointer;
+        dt:list:getElement(pointer,2) >> pressed;
+
+        ++ Neustart mit Mausklick nach einer Kollision
+        if running=false & pressed do
+            230 >> dinoY;
+            0 >> dinoSpeed;
+            460 >> cactusX;
+            0 >> score;
+            true >> running;
+        exit;
+
+        if running do
+
+            ++ Sprung nur vom Boden aus
+            if pressed & dinoY=230 do
+                -13 >> dinoSpeed;
+            exit;
+
+            ++ Schwerkraft und Bewegung
+            dinoSpeed+1 >> dinoSpeed;
+            dinoY+dinoSpeed >> dinoY;
+
+            if dinoY>230 do
+                230 >> dinoY;
+                0 >> dinoSpeed;
+            exit;
+
+            cactusX-6 >> cactusX;
+
+            if cactusX<-25 do
+                480 >> cactusX;
+                score+1 >> score;
+            exit;
+
+            ++ Kollision Dino (20×30) gegen Kaktus (18×45)
+            if dinoX+20>cactusX & dinoX<cactusX+18 & dinoY+30>215 do
+                false >> running;
+            exit;
+        exit;
+
+        ++ Bild zeichnen
+        io:graphics:clear();
+        io:graphics:rect(0,0,480,320,"white");
+        io:graphics:rect(0,260,480,4,"black");
+        io:graphics:rect(dinoX,dinoY,20,30,"black");
+        io:graphics:rect(cactusX,215,18,45,"green");
+        io:graphics:text(12,25,"Punkte: ","black");
+        io:graphics:text(70,25,dt:recToStr(score),"black");
+
+        if running=false do
+            io:graphics:text(150,130,"GAME OVER","red");
+            io:graphics:text(110,155,"Zum Neustart klicken","black");
+        exit;
+
+        io:delay(20);
+    exit;
+
+    exit;

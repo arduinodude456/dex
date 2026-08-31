@@ -1,0 +1,43 @@
+use system:io as io;
+use dex:ui as ui;
+use dex:datatype as dt;
+
+++ dexUI-Demo: Klick auf die Schaltfläche oder Checkbox auf der Bühne
+
+rec main() do
+
+    rec clicks init 0;
+    rec darkMode init false;
+    rec name init "DEX";
+    rec add;
+
+    repeat 1,10000 with rec frame do
+
+        io:graphics:clear();
+        io:graphics:rect(0,0,480,320,"#eef3f8");
+
+        ui:begin(24,24,280);
+        ui:panel("Meine erste dexUI",280,44);
+        ui:label("Willkommen, "+name+"!");
+
+        ui:row();
+        ui:button("Klick mich") >> add;
+        ui:label("Klicks: "+dt:recToStr(clicks));
+        ui:column();
+
+        ui:checkbox("Dunkler Modus",darkMode) >> darkMode;
+        ui:input("Name",name) >> name;
+
+        if add do
+            clicks+1 >> clicks;
+        exit;
+
+        if darkMode do
+            io:graphics:rect(330,24,126,60,"#30343b");
+            io:graphics:text(342,58,"Dark mode aktiv","white");
+        exit;
+
+        io:delay(20);
+    exit;
+
+    exit;

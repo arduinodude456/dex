@@ -1,0 +1,21 @@
+use system:io as io;
+use dex:ui as ui;
+
+++ Kein repeat nötig: dexUI behält den Klick-Handler nach Programmende aktiv.
+
+rec startGedrueckt() do
+    io:graphics:rect(40,180,260,55,"#dff3e7");
+    io:graphics:text(55,213,"Start wurde geklickt!","#176b39");
+    io:out("Start-Button wurde geklickt.");
+    exit;
+
+rec main() do
+    io:graphics:clear();
+    io:graphics:rect(0,0,480,320,"#eef3f8");
+
+    ui:begin(40,40,260);
+    ui:panel("dexUI",260,44);
+    ui:label("Ein Klick ruft eine DEX-Funktion auf:");
+    ui:button("Start",startGedrueckt);
+
+    exit;

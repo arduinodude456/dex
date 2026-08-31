@@ -1,0 +1,6686 @@
+﻿<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>DEX IDE</title>
+
+<style>
+:root {
+    --bg: #f5f7fa;
+    --panel: #ffffff;
+    --panel2: #f0f2f5;
+    --border: #d8dde5;
+
+    --text: #20242b;
+    --muted: #737b87;
+
+    --blue: #1769aa;
+    --purple: #8e44ad;
+    --green: #278a50;
+    --orange: #c45a19;
+    --red: #c0392b;
+    --cyan: #087f8c;
+    --yellow: #9a6b00;
+
+    --editor-bg: #ffffff;
+    --line-bg: #f1f3f6;
+    --selection: #cfe5ff;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+html,
+body {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    overflow: hidden;
+
+    background: var(--bg);
+    color: var(--text);
+
+    font-family:
+        Arial,
+        Helvetica,
+        sans-serif;
+}
+
+body {
+    display: flex;
+    flex-direction: column;
+}
+
+
+/* =========================================================
+   TOP BAR
+   ========================================================= */
+
+#topbar {
+    height: 54px;
+    min-height: 54px;
+
+    display: flex;
+    align-items: center;
+
+    gap: 8px;
+    padding: 0 14px;
+
+    background: var(--panel);
+    border-bottom: 1px solid var(--border);
+
+    box-shadow:
+        0 1px 4px rgba(0,0,0,0.05);
+}
+
+.logo {
+    margin-right: 20px;
+
+    font-size: 21px;
+    font-weight: bold;
+    letter-spacing: 2px;
+}
+
+.logo span {
+    color: var(--blue);
+}
+
+button {
+    border: 1px solid var(--border);
+    border-radius: 6px;
+
+    background: var(--panel2);
+    color: var(--text);
+
+    padding: 7px 13px;
+
+    cursor: pointer;
+
+    font-size: 13px;
+}
+
+button:hover {
+    background: #e5e8ed;
+}
+
+#runButton {
+    background: #dff3e7;
+    border-color: #a9d7ba;
+    color: #176b39;
+    font-weight: bold;
+}
+
+#runButton:hover {
+    background: #cdebd8;
+}
+
+#fileInput {
+    display: none;
+}
+
+#stage {
+    width: 360px;
+    min-width: 360px;
+    display: flex;
+    flex-direction: column;
+    background: var(--panel);
+    border-left: 1px solid var(--border);
+}
+
+#stageHeader {
+    padding: 10px 13px;
+    border-bottom: 1px solid var(--border);
+    color: var(--muted);
+    font-size: 11px;
+    font-weight: bold;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+#stageCanvasWrap {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 14px;
+    overflow: auto;
+    background: #eef0f3;
+}
+
+#dexCanvas {
+    display: block;
+    max-width: 100%;
+    height: auto;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: #fff;
+}
+
+
+/* =========================================================
+   TAB BAR
+   ========================================================= */
+
+#tabbar {
+    height: 36px;
+    min-height: 36px;
+
+    display: flex;
+    align-items: center;
+
+    gap: 4px;
+    padding: 0 10px;
+
+    background: var(--panel2);
+    border-bottom: 1px solid var(--border);
+
+    overflow-x: auto;
+}
+
+#tabList {
+    display: flex;
+    align-items: center;
+
+    gap: 4px;
+
+    min-width: 0;
+}
+
+.tab {
+    display: flex;
+    align-items: center;
+
+    gap: 6px;
+
+    padding: 5px 8px 5px 12px;
+
+    border: 1px solid var(--border);
+    border-radius: 6px 6px 0 0;
+    border-bottom: none;
+
+    background: #e5e8ed;
+    color: var(--muted);
+
+    font-size: 12px;
+    white-space: nowrap;
+
+    cursor: pointer;
+}
+
+.tab.active {
+    background: var(--editor-bg);
+    color: var(--text);
+    font-weight: bold;
+}
+
+.tab .tabClose {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    width: 16px;
+    height: 16px;
+
+    border-radius: 4px;
+
+    color: var(--muted);
+
+    font-size: 12px;
+    line-height: 1;
+}
+
+.tab .tabClose:hover {
+    background: #d3d8de;
+    color: var(--red);
+}
+
+#addTabButton {
+    padding: 4px 9px;
+
+    font-weight: bold;
+    font-size: 14px;
+
+    line-height: 1;
+}
+
+
+/* =========================================================
+   MAIN
+   ========================================================= */
+
+#main {
+    flex: 1;
+    min-height: 0;
+
+    display: flex;
+}
+
+
+/* =========================================================
+   EDITOR
+   ========================================================= */
+
+#editorArea {
+    flex: 1;
+    min-width: 0;
+
+    display: flex;
+
+    background: var(--editor-bg);
+}
+
+#lineNumbers {
+    width: 58px;
+    min-width: 58px;
+
+    padding-top: 16px;
+    padding-right: 10px;
+
+    overflow: hidden;
+
+    background: var(--line-bg);
+
+    border-right: 1px solid var(--border);
+
+    color: #9aa1ab;
+
+    text-align: right;
+
+    font-family:
+        Consolas,
+        "Courier New",
+        monospace;
+
+    font-size: 14px;
+    line-height: 1.55;
+
+    user-select: none;
+}
+
+#editorWrapper {
+    position: relative;
+
+    flex: 1;
+    min-width: 0;
+    min-height: 0;
+
+    overflow: hidden;
+}
+
+#highlight,
+#editor {
+    position: absolute;
+
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+
+    margin: 0;
+    padding: 16px;
+
+    border: 0;
+    outline: 0;
+
+    font-family:
+        Consolas,
+        "Courier New",
+        monospace;
+
+    font-size: 14px;
+    line-height: 1.55;
+
+    white-space: pre;
+    tab-size: 4;
+
+    overflow: auto;
+}
+
+#highlight {
+    z-index: 1;
+
+    pointer-events: none;
+
+    color: var(--text);
+}
+
+#editor {
+    z-index: 2;
+
+    resize: none;
+
+    background: transparent;
+
+    color: transparent;
+
+    caret-color: #222;
+
+    -webkit-text-fill-color: transparent;
+
+    selection-background-color: var(--selection);
+}
+
+
+/* =========================================================
+   SYNTAX HIGHLIGHTING
+   ========================================================= */
+
+.dex-comment {
+    color: #7f8c8d;
+    font-style: italic;
+}
+
+.dex-keyword {
+    color: var(--purple);
+    font-weight: 600;
+}
+
+.dex-type {
+    color: var(--blue);
+    font-weight: 600;
+}
+
+.dex-module {
+    color: var(--yellow);
+}
+
+.dex-function {
+    color: var(--green);
+    font-weight: 600;
+}
+
+.dex-string {
+    color: var(--green);
+}
+
+.dex-number {
+    color: var(--orange);
+}
+
+.dex-operator {
+    color: var(--cyan);
+    font-weight: 600;
+}
+
+.dex-punctuation {
+    color: #707780;
+}
+
+.dex-identifier {
+    color: var(--text);
+}
+
+
+/* =========================================================
+   SIDEBAR
+   ========================================================= */
+
+#sidebar {
+    width: 285px;
+    min-width: 285px;
+
+    background: var(--panel);
+
+    border-left: 1px solid var(--border);
+
+    overflow-y: auto;
+}
+
+.panel {
+    padding: 14px;
+
+    border-bottom: 1px solid var(--border);
+}
+
+.panelTitle {
+    margin-bottom: 10px;
+
+    color: var(--muted);
+
+    font-size: 11px;
+    font-weight: bold;
+
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+.symbol {
+    padding: 6px 8px;
+
+    border-radius: 5px;
+
+    cursor: pointer;
+
+    font-family:
+        Consolas,
+        "Courier New",
+        monospace;
+
+    font-size: 13px;
+}
+
+.symbol:hover {
+    background: #eef2f6;
+}
+
+.symbol.function {
+    color: var(--green);
+}
+
+.symbol.variable {
+    color: var(--blue);
+}
+
+.languageInfo {
+    color: #707780;
+
+    font-size: 12px;
+    line-height: 1.7;
+}
+
+.languageInfo b {
+    color: #40464f;
+}
+
+
+/* =========================================================
+   OUTPUT
+   ========================================================= */
+
+#output {
+    height: 190px;
+    min-height: 190px;
+
+    display: flex;
+    flex-direction: column;
+
+    background: #fafbfc;
+
+    border-top: 1px solid var(--border);
+}
+
+#outputHeader {
+    height: 34px;
+    min-height: 34px;
+
+    display: flex;
+    align-items: center;
+
+    padding: 0 13px;
+
+    background: #f0f2f5;
+
+    border-bottom: 1px solid var(--border);
+
+    color: var(--muted);
+
+    font-size: 11px;
+    font-weight: bold;
+
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+#outputText {
+    flex: 1;
+
+    overflow: auto;
+
+    padding: 10px 14px;
+
+    white-space: pre-wrap;
+
+    font-family:
+        Consolas,
+        "Courier New",
+        monospace;
+
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.output-success {
+    color: #247441;
+}
+
+.output-error {
+    color: #b83227;
+}
+
+
+/* =========================================================
+   STATUS BAR
+   ========================================================= */
+
+#statusbar {
+    height: 26px;
+    min-height: 26px;
+
+    display: flex;
+    align-items: center;
+
+    padding: 0 10px;
+
+    background: #eef0f3;
+
+    border-top: 1px solid var(--border);
+
+    color: #737b87;
+
+    font-size: 11px;
+}
+
+#statusRight {
+    margin-left: auto;
+}
+
+
+/* =========================================================
+   MOBILE
+   ========================================================= */
+
+@media (max-width: 760px) {
+
+    #sidebar {
+        display: none;
+    }
+
+    .logo {
+        margin-right: 4px;
+    }
+
+    #topbar {
+        overflow-x: auto;
+    }
+}
+</style>
+</head>
+
+
+<body>
+
+
+<!-- =======================================================
+     TOP BAR
+     ======================================================= -->
+
+<header id="topbar">
+
+    <div class="logo">
+        <span>DEX</span> IDE
+    </div>
+
+    <button id="runButton">
+        ▶ Run
+    </button>
+
+    <button id="newButton">
+        New
+    </button>
+
+    <button id="openButton">
+        Open
+    </button>
+
+    <button id="saveButton">
+        Save
+    </button>
+
+    <input
+        id="fileInput"
+        type="file"
+        accept=".dex,.txt"
+    >
+
+</header>
+
+
+<!-- =======================================================
+     TAB BAR (mehrere Programme gleichzeitig)
+     ======================================================= -->
+
+<div id="tabbar">
+
+    <div id="tabList"></div>
+
+    <button id="addTabButton" title="Neues Programm hinzufügen">
+        +
+    </button>
+
+</div>
+
+
+<!-- =======================================================
+     MAIN
+     ======================================================= -->
+
+<main id="main">
+
+
+    <!-- ===================================================
+         EDITOR
+         =================================================== -->
+
+    <section id="editorArea">
+
+        <div id="lineNumbers">
+            1
+        </div>
+
+        <div id="editorWrapper">
+
+            <pre id="highlight"></pre>
+
+            <textarea
+                id="editor"
+                spellcheck="false"
+                autocomplete="off"
+                autocorrect="off"
+                autocapitalize="off"
+            ></textarea>
+
+        </div>
+
+    </section>
+
+
+    <!-- ===================================================
+         SIDEBAR
+         =================================================== -->
+
+    <aside id="sidebar">
+
+        <div class="panel">
+
+            <div class="panelTitle">
+                Symbols
+            </div>
+
+            <div id="symbols"></div>
+
+        </div>
+
+
+        <div class="panel">
+
+            <div class="panelTitle">
+                DEX Syntax
+            </div>
+
+            <div class="languageInfo">
+
+                <b>Variablen</b><br>
+
+                rec item;<br>
+                rec x init 10;<br><br>
+
+                <b>Typen</b><br>
+
+                as dt:Str() name init void;<br>
+                as dt:returnType('list') zahlen init {1,2,3};<br><br>
+
+                <b>Zuweisung</b><br>
+
+                5 &gt;&gt; x;<br>
+                x &lt;&lt; 5;<br><br>
+
+                <b>Funktionen</b><br>
+
+                rec sum(rec i) do<br>
+                &nbsp;&nbsp;i+5 &gt;&gt; i;<br>
+                &nbsp;&nbsp;exit with i;<br><br>
+
+                <b>Schleifen</b><br>
+
+                repeat 1,10 with rec idx do<br>
+                &nbsp;&nbsp;...<br>
+                exit;<br><br>
+
+                repeat zahlen with rec item do<br>
+                &nbsp;&nbsp;...<br>
+                exit;<br><br>
+
+                <b>Eigene Module</b><br>
+
+                top math do<br>
+                &nbsp;&nbsp;rec math:sum(rec a, rec b) do<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;exit with a+b;<br>
+                exit top;<br><br>
+
+                math:sum(2,3);
+
+                <br><br><b>Bedingungen</b><br>
+
+                if a=b do<br>
+                &nbsp;&nbsp;...<br>
+                else<br>
+                &nbsp;&nbsp;...<br>
+                exit;<br><br>
+
+                if with x do<br>
+                &nbsp;&nbsp;is 1 do ...skip;<br>
+                &nbsp;&nbsp;or is do ...skip;<br>
+                exit;<br><br>
+
+                Operatoren: = (gleich),
+                & (und), | (oder)<br><br>
+
+                <b>io:file / io:graphics</b><br>
+
+                io:file:write(n,i);<br>
+                io:file:read(n);<br>
+                io:graphics:rect(x,y,b,h,f);<br>
+                io:graphics:circle(x,y,r,f);<br>
+                io:graphics:line(x1,y1,x2,y2,f);<br>
+                io:graphics:text(x,y,t,f);<br>
+                io:graphics:getPointer(); → {x,y,gedrückt}<br><br>
+
+                <b>dt:list</b><br>
+                dt:list:setElement(liste,index,wert);<br>
+                dt:list:remove(liste,index);<br>
+                dt:list:getElement(liste,index);<br>
+                dt:list:connectLists(liste1,liste2);<br><br>
+
+                <b>dex:text</b><br>
+                text:upper(text); / upper(text);<br>
+                text:lower(text); / lower(text);<br>
+                Mehrzeilig: """Text…"""<br><br>
+
+                <b>dex:ui</b><br>
+                ui:begin(x,y,breite);<br>
+                ui:label(text); ui:button(text,handler);<br>
+                ui:checkbox(text,wert); ui:input(titel,wert);<br>
+                ui:row(); ui:column(); ui:panel(titel,b,h);
+
+            </div>
+
+        </div>
+
+    </aside>
+
+    <!-- Separate Bühne für io:graphics -->
+    <aside id="stage">
+        <div id="stageHeader">Bühne</div>
+        <div id="stageCanvasWrap">
+            <canvas id="dexCanvas" width="480" height="320"></canvas>
+        </div>
+    </aside>
+
+</main>
+
+
+<!-- =======================================================
+     OUTPUT
+     ======================================================= -->
+
+<section id="output">
+
+    <div id="outputHeader">
+        Output
+    </div>
+
+    <div id="outputText"></div>
+
+</section>
+
+
+<!-- =======================================================
+     STATUS
+     ======================================================= -->
+
+<footer id="statusbar">
+
+    <span id="status">
+        Bereit
+    </span>
+
+    <span id="statusRight">
+        DEX IDE · Lexer · Parser · AST · Runtime
+    </span>
+
+</footer>
+
+
+<script>
+"use strict";
+
+
+/* =========================================================
+   DEFAULT DEX PROGRAM
+   ========================================================= */
+
+const DEFAULT_SOURCE =
+`use system:io as io;
+use dex:datatype as dt;
+
+++ Dies ist ein Kommentar
+++ DATENTYPEN:
+++ rec: auto erkennung
+++ str: Zeichenkette
+++ int: Integer
+++ boo: boolean
+++ num: float
+
+++ Listen
+
+as dt:returnType('list') zahlen init {1,2,3};
+
+rec item;
+item << dt:listTools:returnItem(zahlen,0);
+
+rec main() do
+
+    io:out('Hallo, Welt!');
+
+    io:out(dt:recToStr(sum(7)));
+
+    as dt:Str() nutzername init void;
+
+    io:get(1,"Name:") >> nutzername;
+
+    exit;
+
+rec sum(rec i) do
+
+    i+5 >> i;
+
+    exit with i;
+
+++ Schleifen:
+
+repeat 1,10 with rec idx do
+    io:out(dt:recToStr(idx));
+exit;
+
+repeat zahlen with rec item do
+    io:out(dt:recToStr(item));
+exit;`;
+
+
+/* =========================================================
+   DOM
+   ========================================================= */
+
+const editor =
+    document.getElementById("editor");
+
+const highlight =
+    document.getElementById("highlight");
+
+const lineNumbers =
+    document.getElementById("lineNumbers");
+
+const output =
+    document.getElementById("outputText");
+
+const status =
+    document.getElementById("status");
+
+const symbols =
+    document.getElementById("symbols");
+
+const tabList =
+    document.getElementById("tabList");
+
+
+/* =========================================================
+   TABS (mehrere Programme gleichzeitig)
+   ========================================================= */
+
+let tabIdCounter = 1;
+
+let tabs = [
+    {
+        id: tabIdCounter++,
+        name: "main.dex",
+        content: DEFAULT_SOURCE
+    }
+];
+
+let activeTabId = tabs[0].id;
+
+
+function activeTab() {
+
+    return tabs.find(
+        tab => tab.id === activeTabId
+    );
+}
+
+
+function syncActiveTabFromEditor() {
+
+    const tab =
+        activeTab();
+
+    if (tab) {
+
+        tab.content =
+            editor.value;
+    }
+}
+
+
+function renderTabs() {
+
+    tabList.innerHTML = "";
+
+
+    for (
+        const tab of tabs
+    ) {
+
+        const el =
+            document.createElement("div");
+
+        el.className =
+            "tab" +
+            (
+                tab.id === activeTabId
+                    ? " active"
+                    : ""
+            );
+
+
+        const label =
+            document.createElement("span");
+
+        label.textContent =
+            tab.name;
+
+        label.ondblclick = () => {
+
+            const newName =
+                prompt(
+                    "Neuer Name für dieses Programm:",
+                    tab.name
+                );
+
+            if (
+                newName &&
+                newName.trim()
+            ) {
+
+                tab.name =
+                    newName.trim();
+
+                renderTabs();
+            }
+        };
+
+        el.appendChild(label);
+
+
+        const close =
+            document.createElement("span");
+
+        close.className =
+            "tabClose";
+
+        close.textContent =
+            "×";
+
+        close.onclick = event => {
+
+            event.stopPropagation();
+
+            closeTab(tab.id);
+        };
+
+        el.appendChild(close);
+
+
+        el.onclick = () => {
+
+            switchTab(tab.id);
+        };
+
+
+        tabList.appendChild(el);
+    }
+}
+
+
+function switchTab(id) {
+
+    if (id === activeTabId)
+        return;
+
+
+    syncActiveTabFromEditor();
+
+
+    activeTabId = id;
+
+
+    editor.value =
+        activeTab().content;
+
+    updateEditor();
+
+    renderTabs();
+
+    status.textContent =
+        activeTab().name;
+}
+
+
+function closeTab(id) {
+
+    if (tabs.length <= 1)
+        return;
+
+
+    const index =
+        tabs.findIndex(
+            tab => tab.id === id
+        );
+
+    if (index === -1)
+        return;
+
+
+    tabs.splice(index, 1);
+
+
+    if (id === activeTabId) {
+
+        const next =
+            tabs[
+                Math.max(0, index - 1)
+            ];
+
+        activeTabId =
+            next.id;
+
+        editor.value =
+            next.content;
+
+        updateEditor();
+    }
+
+
+    renderTabs();
+}
+
+
+function addTab(name, content) {
+
+    const tab = {
+        id: tabIdCounter++,
+        name:
+            name ||
+            `modul${tabIdCounter - 1}.dex`,
+        content:
+            content ||
+            `use system:io as io;\n\nrec main() do\n    io:out('Hallo, DEX!');\n    exit;`
+    };
+
+
+    syncActiveTabFromEditor();
+
+
+    tabs.push(tab);
+
+    activeTabId =
+        tab.id;
+
+    editor.value =
+        tab.content;
+
+    updateEditor();
+
+    renderTabs();
+}
+
+
+document.getElementById(
+    "addTabButton"
+).onclick = () => {
+
+    addTab();
+};
+
+
+editor.value = DEFAULT_SOURCE;
+
+renderTabs();
+
+
+/* =========================================================
+   TOKEN TYPES
+   ========================================================= */
+
+const TokenType = Object.freeze({
+
+    COMMENT: "COMMENT",
+
+    STRING: "STRING",
+
+    NUMBER: "NUMBER",
+
+    KEYWORD: "KEYWORD",
+
+    TYPE: "TYPE",
+
+    IDENTIFIER: "IDENTIFIER",
+
+    OPERATOR: "OPERATOR",
+
+    PUNCTUATION: "PUNCTUATION",
+
+    EOF: "EOF"
+});
+
+
+/* =========================================================
+   TOKEN
+   ========================================================= */
+
+class Token {
+
+    constructor(
+        type,
+        value,
+        line,
+        column
+    ) {
+
+        this.type = type;
+        this.value = value;
+        this.line = line;
+        this.column = column;
+    }
+}
+
+
+/* =========================================================
+   DEX LEXER
+   ========================================================= */
+
+class DEXLexer {
+
+    constructor(source) {
+
+        this.source = source;
+
+        this.position = 0;
+
+        this.line = 1;
+        this.column = 1;
+
+        this.tokens = [];
+    }
+
+
+    current() {
+
+        return this.source[
+            this.position
+        ];
+    }
+
+
+    peek(offset = 1) {
+
+        return this.source[
+            this.position + offset
+        ];
+    }
+
+
+    advance() {
+
+        const ch =
+            this.current();
+
+        this.position++;
+
+        if (ch === "\n") {
+
+            this.line++;
+            this.column = 1;
+
+        } else {
+
+            this.column++;
+        }
+
+        return ch;
+    }
+
+
+    add(
+        type,
+        value,
+        line,
+        column
+    ) {
+
+        this.tokens.push(
+            new Token(
+                type,
+                value,
+                line,
+                column
+            )
+        );
+    }
+
+
+    isWhitespace(ch) {
+
+        return (
+            ch === " " ||
+            ch === "\t" ||
+            ch === "\r" ||
+            ch === "\n"
+        );
+    }
+
+
+    isDigit(ch) {
+
+        return (
+            ch >= "0" &&
+            ch <= "9"
+        );
+    }
+
+
+    isIdentifierStart(ch) {
+
+        return (
+            !!ch &&
+            /[A-Za-z_]/.test(ch)
+        );
+    }
+
+
+    isIdentifierPart(ch) {
+
+        return (
+            !!ch &&
+            /[A-Za-z0-9_]/.test(ch)
+        );
+    }
+
+
+    readComment() {
+
+        const line =
+            this.line;
+
+        const column =
+            this.column;
+
+        let value = "";
+
+        while (
+            this.position <
+            this.source.length &&
+            this.current() !== "\n"
+        ) {
+
+            value +=
+                this.advance();
+        }
+
+        this.add(
+            TokenType.COMMENT,
+            value,
+            line,
+            column
+        );
+    }
+
+
+    readString() {
+
+        const line =
+            this.line;
+
+        const column =
+            this.column;
+
+        const triple =
+            this.current() === '"' &&
+            this.peek() === '"' &&
+            this.peek(2) === '"';
+
+        const quote =
+            this.advance();
+
+        let value = quote;
+
+        if (triple) {
+
+            value += this.advance() + this.advance();
+
+            while (this.position < this.source.length) {
+
+                if (
+                    this.current() === '"' &&
+                    this.peek() === '"' &&
+                    this.peek(2) === '"'
+                ) {
+
+                    value += this.advance() + this.advance() + this.advance();
+                    break;
+                }
+
+                value += this.advance();
+            }
+
+            this.add(TokenType.STRING, value, line, column);
+            return;
+        }
+
+        while (
+            this.position <
+            this.source.length
+        ) {
+
+            const ch =
+                this.current();
+
+            value +=
+                this.advance();
+
+            if (ch === "\\") {
+
+                if (
+                    this.position <
+                    this.source.length
+                ) {
+
+                    value +=
+                        this.advance();
+                }
+
+                continue;
+            }
+
+            if (ch === quote)
+                break;
+        }
+
+        this.add(
+            TokenType.STRING,
+            value,
+            line,
+            column
+        );
+    }
+
+
+    readNumber() {
+
+        const line =
+            this.line;
+
+        const column =
+            this.column;
+
+        let value = "";
+
+        while (
+            this.isDigit(
+                this.current()
+            )
+        ) {
+
+            value +=
+                this.advance();
+        }
+
+        if (
+            this.current() === "." &&
+            this.isDigit(
+                this.peek()
+            )
+        ) {
+
+            value +=
+                this.advance();
+
+            while (
+                this.isDigit(
+                    this.current()
+                )
+            ) {
+
+                value +=
+                    this.advance();
+            }
+        }
+
+        this.add(
+            TokenType.NUMBER,
+            value,
+            line,
+            column
+        );
+    }
+
+
+    readIdentifier() {
+
+        const line =
+            this.line;
+
+        const column =
+            this.column;
+
+        let value = "";
+
+        while (
+            this.isIdentifierPart(
+                this.current()
+            )
+        ) {
+
+            value +=
+                this.advance();
+        }
+
+
+        const keywords =
+            new Set([
+                "use",
+                "as",
+                "init",
+                "do",
+                "exit",
+                "with",
+                "repeat",
+                "top",
+                "if",
+                "else",
+                "is",
+                "or",
+                "skip"
+            ]);
+
+
+        const types =
+            new Set([
+                "rec",
+                "str",
+                "int",
+                "boo",
+                "num",
+                "list",
+                "void"
+            ]);
+
+
+        let type =
+            TokenType.IDENTIFIER;
+
+
+        if (
+            keywords.has(value)
+        ) {
+
+            type =
+                TokenType.KEYWORD;
+
+        } else if (
+            types.has(value)
+        ) {
+
+            type =
+                TokenType.TYPE;
+        }
+
+
+        this.add(
+            type,
+            value,
+            line,
+            column
+        );
+    }
+
+
+    lex() {
+
+        while (
+            this.position <
+            this.source.length
+        ) {
+
+            const ch =
+                this.current();
+
+
+            /*
+             * Whitespace
+             */
+
+            if (
+                this.isWhitespace(ch)
+            ) {
+
+                this.advance();
+
+                continue;
+            }
+
+
+            /*
+             * DEX comment:
+             *
+             * ++ comment
+             */
+
+            if (
+                ch === "+" &&
+                this.peek() === "+"
+            ) {
+
+                this.readComment();
+
+                continue;
+            }
+
+
+            /*
+             * Strings
+             */
+
+            if (
+                ch === "'" ||
+                ch === '"'
+            ) {
+
+                this.readString();
+
+                continue;
+            }
+
+
+            /*
+             * Numbers
+             */
+
+            if (
+                this.isDigit(ch)
+            ) {
+
+                this.readNumber();
+
+                continue;
+            }
+
+
+            /*
+             * Identifiers
+             */
+
+            if (
+                this.isIdentifierStart(ch)
+            ) {
+
+                this.readIdentifier();
+
+                continue;
+            }
+
+
+            /*
+             * Zwei-Zeichen-Operatoren
+             */
+
+            const two =
+                ch + this.peek();
+
+
+            if (
+                two === ">>" ||
+                two === "<<" ||
+                two === "==" ||
+                two === "!=" ||
+                two === "<=" ||
+                two === ">="
+            ) {
+
+                const line =
+                    this.line;
+
+                const column =
+                    this.column;
+
+                this.advance();
+                this.advance();
+
+                this.add(
+                    TokenType.OPERATOR,
+                    two,
+                    line,
+                    column
+                );
+
+                continue;
+            }
+
+
+            /*
+             * Ein-Zeichen-Operatoren
+             */
+
+            if (
+                "+-*/%=<>!&|".includes(ch)
+            ) {
+
+                const line =
+                    this.line;
+
+                const column =
+                    this.column;
+
+                this.advance();
+
+                this.add(
+                    TokenType.OPERATOR,
+                    ch,
+                    line,
+                    column
+                );
+
+                continue;
+            }
+
+
+            /*
+             * Punctuation
+             */
+
+            if (
+                "{}(),;:[]".includes(ch)
+            ) {
+
+                const line =
+                    this.line;
+
+                const column =
+                    this.column;
+
+                this.advance();
+
+                this.add(
+                    TokenType.PUNCTUATION,
+                    ch,
+                    line,
+                    column
+                );
+
+                continue;
+            }
+
+
+            /*
+             * Unbekanntes Zeichen
+             */
+
+            const line =
+                this.line;
+
+            const column =
+                this.column;
+
+            this.add(
+                TokenType.IDENTIFIER,
+                this.advance(),
+                line,
+                column
+            );
+        }
+
+
+        this.tokens.push(
+            new Token(
+                TokenType.EOF,
+                "",
+                this.line,
+                this.column
+            )
+        );
+
+
+        return this.tokens;
+    }
+}
+
+
+/* =========================================================
+   SYNTAX HIGHLIGHTING
+   ========================================================= */
+
+function escapeHTML(text) {
+
+    return text
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;");
+}
+
+
+function classForToken(token) {
+
+    switch (token.type) {
+
+        case TokenType.COMMENT:
+            return "dex-comment";
+
+        case TokenType.KEYWORD:
+            return "dex-keyword";
+
+        case TokenType.TYPE:
+            return "dex-type";
+
+        case TokenType.STRING:
+            return "dex-string";
+
+        case TokenType.NUMBER:
+            return "dex-number";
+
+        case TokenType.OPERATOR:
+            return "dex-operator";
+
+        case TokenType.PUNCTUATION:
+            return "dex-punctuation";
+
+        case TokenType.IDENTIFIER:
+            return "dex-identifier";
+
+        default:
+            return "";
+    }
+}
+
+
+/*
+ * Der Quelltext wird anhand der echten Tokenpositionen
+ * wieder zusammengesetzt.
+ *
+ * Es werden KEINE Platzhalterstrings verwendet.
+ */
+
+function highlightDEX(source) {
+
+    const lexer =
+        new DEXLexer(source);
+
+    const tokens =
+        lexer.lex();
+
+    let result = "";
+
+    let position = 0;
+
+    for (const token of tokens) {
+
+        if (
+            token.type ===
+            TokenType.EOF
+        )
+            break;
+
+
+        const tokenPosition =
+            getSourcePosition(
+                source,
+                token
+            );
+
+
+        if (
+            tokenPosition < 0
+        )
+            continue;
+
+
+        /*
+         * Whitespace zwischen Tokens
+         */
+
+        result += escapeHTML(
+            source.slice(
+                position,
+                tokenPosition
+            )
+        );
+
+
+        const className =
+            classForToken(token);
+
+
+        const text =
+            escapeHTML(
+                token.value
+            );
+
+
+        if (className) {
+
+            result +=
+                `<span class="${className}">${text}</span>`;
+
+        } else {
+
+            result += text;
+        }
+
+
+        position =
+            tokenPosition +
+            token.value.length;
+    }
+
+
+    result += escapeHTML(
+        source.slice(position)
+    );
+
+
+    return result + "\n";
+}
+
+
+function getSourcePosition(
+    source,
+    token
+) {
+
+    let line = 1;
+    let column = 1;
+
+    for (
+        let i = 0;
+        i < source.length;
+        i++
+    ) {
+
+        if (
+            line === token.line &&
+            column === token.column
+        ) {
+
+            return i;
+        }
+
+
+        if (
+            source[i] === "\n"
+        ) {
+
+            line++;
+            column = 1;
+
+        } else {
+
+            column++;
+        }
+    }
+
+
+    return -1;
+}
+
+
+/* =========================================================
+   AST
+   ========================================================= */
+
+class ASTNode {
+
+    constructor(
+        type,
+        data = {}
+    ) {
+
+        this.type = type;
+
+        Object.assign(
+            this,
+            data
+        );
+    }
+}
+
+
+/* =========================================================
+   PARSER
+   ========================================================= */
+
+class DEXParser {
+
+    constructor(tokens) {
+
+        this.tokens = tokens;
+
+        this.position = 0;
+    }
+
+
+    current() {
+
+        return this.tokens[
+            this.position
+        ];
+    }
+
+
+    peek(offset = 1) {
+
+        return this.tokens[
+            this.position + offset
+        ];
+    }
+
+
+    advance() {
+
+        const token =
+            this.current();
+
+        if (
+            this.position <
+            this.tokens.length - 1
+        ) {
+
+            this.position++;
+        }
+
+        return token;
+    }
+
+
+    check(value) {
+
+        return (
+            this.current().value === value
+        );
+    }
+
+
+    match(value) {
+
+        if (
+            this.check(value)
+        ) {
+
+            return this.advance();
+        }
+
+        return null;
+    }
+
+
+    consume(
+        value,
+        message
+    ) {
+
+        if (
+            !this.check(value)
+        ) {
+
+            const token =
+                this.current();
+
+            throw new Error(
+                `${message} ` +
+                `(Zeile ${token.line}, ` +
+                `Spalte ${token.column})`
+            );
+        }
+
+        return this.advance();
+    }
+
+
+    skipComments() {
+
+        while (
+            this.current().type ===
+            TokenType.COMMENT
+        ) {
+
+            this.advance();
+        }
+    }
+
+
+    parse() {
+
+        const body = [];
+
+
+        while (
+            this.current().type !==
+            TokenType.EOF
+        ) {
+
+            /*
+             * Ganz wichtig:
+             *
+             * Kommentare werden hier ebenfalls
+             * vollständig übersprungen.
+             */
+
+            this.skipComments();
+
+
+            if (
+                this.current().type ===
+                TokenType.EOF
+            )
+                break;
+
+
+            body.push(
+                this.statement()
+            );
+        }
+
+
+        return new ASTNode(
+            "Program",
+            { body }
+        );
+    }
+
+
+    statement() {
+
+        this.skipComments();
+
+
+        /*
+         * use
+         */
+
+        if (
+            this.check("use")
+        ) {
+
+            return this.parseUse();
+        }
+
+
+        /*
+         * top
+         *
+         * Eigenes Modul:
+         *
+         * top math do
+         *     ...
+         * exit top;
+         */
+
+        if (
+            this.check("top")
+        ) {
+
+            return this.parseTopModule();
+        }
+
+
+        /*
+         * if
+         *
+         * if [expr] do ... [else] ... exit;
+         * if with [var] do is [expr] do ... skip; ... exit;
+         */
+
+        if (
+            this.check("if")
+        ) {
+
+            return this.parseIf();
+        }
+
+
+        /*
+         * Funktion
+         *
+         * rec name(...)
+         */
+
+        if (
+            this.check("rec") &&
+            (
+                this.peek(2)?.value === "(" ||
+                (
+                    this.peek(2)?.value === ":" &&
+                    this.peek(4)?.value === "("
+                )
+            )
+        ) {
+
+            return this.parseFunction();
+        }
+
+
+        /*
+         * Variable
+         */
+
+        if (
+            this.check("rec") ||
+            this.check("as")
+        ) {
+
+            return this.parseVariable();
+        }
+
+
+        /*
+         * repeat
+         */
+
+        if (
+            this.check("repeat")
+        ) {
+
+            return this.parseRepeat();
+        }
+
+
+        /*
+         * exit
+         */
+
+        if (
+            this.check("exit")
+        ) {
+
+            return this.parseExit();
+        }
+
+
+        /*
+         * Sonst Ausdruck
+         */
+
+        return this.parseExpressionStatement();
+    }
+
+
+    /* =====================================================
+       USE
+       ===================================================== */
+
+    parseUse() {
+
+        this.consume(
+            "use",
+            "Erwartet 'use'."
+        );
+
+
+        const parts = [];
+
+
+        while (
+            !this.check("as") &&
+            !this.check(";") &&
+            this.current().type !==
+            TokenType.EOF
+        ) {
+
+            parts.push(
+                this.advance().value
+            );
+        }
+
+
+        this.consume(
+            "as",
+            "Erwartet 'as' nach Modul."
+        );
+
+
+        const alias =
+            this.advance().value;
+
+
+        this.match(";");
+
+
+        return new ASTNode(
+            "Use",
+            {
+                module:
+                    parts.join(""),
+                alias
+            }
+        );
+    }
+
+
+    /* =====================================================
+       TOP (eigenes Modul)
+       ===================================================== */
+
+    parseTopModule() {
+
+        this.consume(
+            "top",
+            "Erwartet 'top'."
+        );
+
+
+        const nameToken =
+            this.current();
+
+
+        if (
+            nameToken.type !==
+            TokenType.IDENTIFIER
+        ) {
+
+            throw new Error(
+                `Erwartet Modulnamen ` +
+                `(Zeile ${nameToken.line}, ` +
+                `Spalte ${nameToken.column})`
+            );
+        }
+
+
+        const name =
+            this.advance().value;
+
+
+        this.consume(
+            "do",
+            "Erwartet 'do'."
+        );
+
+
+        const body = [];
+
+
+        /*
+         * Ein Modul endet mit
+         * "exit top;", nicht mit
+         * einem einfachen "exit;".
+         *
+         * Deshalb hier gezielt auf
+         * "exit" gefolgt von "top"
+         * prüfen, bevor wir es als
+         * normales Statement lesen.
+         */
+
+        while (
+            this.current().type !==
+            TokenType.EOF
+        ) {
+
+            this.skipComments();
+
+
+            if (
+                this.check("exit") &&
+                this.peek(1)?.value ===
+                    "top"
+            ) {
+
+                break;
+            }
+
+
+            body.push(
+                this.statement()
+            );
+        }
+
+
+        this.consume(
+            "exit",
+            "Erwartet 'exit top' am Ende des Moduls."
+        );
+
+
+        this.consume(
+            "top",
+            "Erwartet 'top' nach 'exit'."
+        );
+
+
+        this.match(";");
+
+
+        return new ASTNode(
+            "TopModule",
+            {
+                name,
+                body
+            }
+        );
+    }
+
+
+    /* =====================================================
+       IF / SWITCH
+       ===================================================== */
+
+    parseIf() {
+
+        this.consume(
+            "if",
+            "Erwartet 'if'."
+        );
+
+
+        if (
+            this.match("with")
+        ) {
+
+            return this.parseSwitch();
+        }
+
+
+        const condition =
+            this.parseExpression(
+                new Set(["do"])
+            );
+
+
+        this.consume(
+            "do",
+            "Erwartet 'do'."
+        );
+
+
+        const thenBody = [];
+
+
+        while (
+            this.current().type !==
+            TokenType.EOF
+        ) {
+
+            this.skipComments();
+
+
+            if (
+                this.check("else") ||
+                this.check("exit")
+            ) {
+
+                break;
+            }
+
+
+            thenBody.push(
+                this.statement()
+            );
+        }
+
+
+        const elseBody = [];
+
+
+        if (
+            this.match("else")
+        ) {
+
+            while (
+                this.current().type !==
+                TokenType.EOF
+            ) {
+
+                this.skipComments();
+
+
+                if (
+                    this.check("exit")
+                ) {
+
+                    break;
+                }
+
+
+                elseBody.push(
+                    this.statement()
+                );
+            }
+        }
+
+
+        this.consume(
+            "exit",
+            "Erwartet 'exit' am Ende von 'if'."
+        );
+
+
+        this.consume(
+            ";",
+            "Erwartet ';' nach 'exit'."
+        );
+
+
+        return new ASTNode(
+            "If",
+            {
+                condition,
+                thenBody,
+                elseBody
+            }
+        );
+    }
+
+
+    /*
+     * if with [var] do
+     *     is [expr] do
+     *         ...
+     *     skip;
+     *     or is [expr] do
+     *         ...
+     *     skip;
+     *     or is do
+     *         ...
+     *     skip;
+     * exit;
+     */
+
+    parseSwitch() {
+
+        const subject =
+            this.parseExpression(
+                new Set(["do"])
+            );
+
+
+        this.consume(
+            "do",
+            "Erwartet 'do'."
+        );
+
+
+        this.consume(
+            "is",
+            "Erwartet 'is'."
+        );
+
+
+        const cases = [];
+
+        let defaultBody = null;
+
+        let more = true;
+
+
+        while (more) {
+
+            this.skipComments();
+
+
+            let test = null;
+
+
+            if (
+                !this.check("do")
+            ) {
+
+                test =
+                    this.parseExpression(
+                        new Set(["do"])
+                    );
+            }
+
+
+            this.consume(
+                "do",
+                "Erwartet 'do'."
+            );
+
+
+            const body = [];
+
+
+            while (
+                this.current().type !==
+                TokenType.EOF
+            ) {
+
+                this.skipComments();
+
+
+                if (
+                    this.check("skip") ||
+                    this.check("or") ||
+                    this.check("exit")
+                ) {
+
+                    break;
+                }
+
+
+                body.push(
+                    this.statement()
+                );
+            }
+
+
+            if (
+                this.match("skip")
+            ) {
+
+                this.match(";");
+            }
+
+
+            if (
+                test === null
+            ) {
+
+                defaultBody = body;
+
+            } else {
+
+                cases.push({
+                    test,
+                    body
+                });
+            }
+
+
+            this.skipComments();
+
+
+            if (
+                this.match("or")
+            ) {
+
+                this.consume(
+                    "is",
+                    "Erwartet 'is' nach 'or'."
+                );
+
+                continue;
+            }
+
+
+            more = false;
+        }
+
+
+        this.consume(
+            "exit",
+            "Erwartet 'exit' am Ende von 'if with'."
+        );
+
+
+        this.consume(
+            ";",
+            "Erwartet ';' nach 'exit'."
+        );
+
+
+        return new ASTNode(
+            "Switch",
+            {
+                subject,
+                cases,
+                defaultBody
+            }
+        );
+    }
+
+
+    /* =====================================================
+       VARIABLE
+       ===================================================== */
+
+    parseVariable() {
+
+        let declaredType =
+            "rec";
+
+
+        /*
+         * rec x
+         */
+
+        if (
+            this.match("rec")
+        ) {
+
+            declaredType =
+                "rec";
+
+        } else {
+
+            /*
+             * as dt:...
+             */
+
+            this.consume(
+                "as",
+                "Erwartet 'as'."
+            );
+
+
+            this.consume(
+                "dt",
+                "Erwartet 'dt'."
+            );
+
+
+            this.consume(
+                ":",
+                "Erwartet ':'."
+            );
+
+
+            const typeName =
+                this.advance().value;
+
+
+            declaredType =
+                typeName;
+
+
+            /*
+             * z.B.
+             *
+             * dt:Str()
+             *
+             * dt:returnType('list')
+             */
+
+            if (
+                this.match("(")
+            ) {
+
+                const argumentsList = [];
+
+
+                while (
+                    !this.check(")") &&
+                    this.current().type !==
+                    TokenType.EOF
+                ) {
+
+                    argumentsList.push(
+                        this.advance().value
+                    );
+                }
+
+
+                this.consume(
+                    ")",
+                    "Erwartet ')'."
+                );
+
+
+                declaredType +=
+                    "(" +
+                    argumentsList.join("") +
+                    ")";
+            }
+        }
+
+
+        const nameToken =
+            this.current();
+
+
+        if (
+            nameToken.type !==
+            TokenType.IDENTIFIER
+        ) {
+
+            throw new Error(
+                `Erwartet Variablennamen ` +
+                `(Zeile ${nameToken.line}, ` +
+                `Spalte ${nameToken.column})`
+            );
+        }
+
+
+        const name =
+            this.advance().value;
+
+
+        let initializer =
+            null;
+
+
+        if (
+            this.match("init")
+        ) {
+
+            initializer =
+                this.parseExpression(
+                    new Set([";"])
+                );
+        }
+
+
+        this.consume(
+            ";",
+            "Erwartet ';' am Ende der Variablendeklaration."
+        );
+
+
+        return new ASTNode(
+            "Variable",
+            {
+                name,
+                declaredType,
+                initializer
+            }
+        );
+    }
+
+
+    /* =====================================================
+       FUNCTION
+       ===================================================== */
+
+    parseFunction() {
+
+        this.consume(
+            "rec",
+            "Erwartet 'rec'."
+        );
+
+
+        let name =
+            this.advance().value;
+
+
+        /*
+         * Qualifizierter Name
+         * innerhalb eines Moduls:
+         *
+         * rec math:sum(...) do
+         */
+
+        if (
+            this.check(":")
+        ) {
+
+            this.advance();
+
+
+            name +=
+                ":" +
+                this.advance().value;
+        }
+
+
+        this.consume(
+            "(",
+            "Erwartet '('."
+        );
+
+
+        const parameters = [];
+
+
+        while (
+            !this.check(")") &&
+            this.current().type !==
+            TokenType.EOF
+        ) {
+
+            this.match("rec");
+
+
+            const parameter =
+                this.advance();
+
+
+            parameters.push(
+                parameter.value
+            );
+
+
+            if (
+                !this.match(",")
+            ) {
+
+                break;
+            }
+        }
+
+
+        this.consume(
+            ")",
+            "Erwartet ')'."
+        );
+
+
+        this.consume(
+            "do",
+            "Erwartet 'do'."
+        );
+
+
+        const body = [];
+
+
+        /*
+         * WICHTIG:
+         *
+         * Erst Kommentare überspringen,
+         * dann auf exit prüfen.
+         *
+         * Dadurch funktioniert:
+         *
+         * ++ Kommentar
+         * exit;
+         */
+
+        while (
+            this.current().type !==
+            TokenType.EOF
+        ) {
+
+            this.skipComments();
+
+
+            if (
+                this.check("exit")
+            ) {
+
+                break;
+            }
+
+
+            body.push(
+                this.statement()
+            );
+        }
+
+
+        const exitNode =
+            this.parseExit();
+
+
+        return new ASTNode(
+            "Function",
+            {
+                name,
+                parameters,
+                body,
+                exitNode
+            }
+        );
+    }
+
+
+    /* =====================================================
+       EXIT
+       ===================================================== */
+
+    parseExit() {
+
+        this.consume(
+            "exit",
+            "Erwartet 'exit'."
+        );
+
+
+        if (
+            this.match("with")
+        ) {
+
+            const expression =
+                this.parseExpression(
+                    new Set([";"])
+                );
+
+
+            this.consume(
+                ";",
+                "Erwartet ';' nach 'exit with'."
+            );
+
+
+            return new ASTNode(
+                "Return",
+                {
+                    expression
+                }
+            );
+        }
+
+
+        this.consume(
+            ";",
+            "Erwartet ';' nach 'exit'."
+        );
+
+
+        return new ASTNode(
+            "Exit"
+        );
+    }
+
+
+    /* =====================================================
+       REPEAT
+       ===================================================== */
+
+    parseRepeat() {
+
+        this.consume(
+            "repeat",
+            "Erwartet 'repeat'."
+        );
+
+
+        const first =
+            this.parseExpression(
+                new Set([
+                    ",",
+                    "with"
+                ])
+            );
+
+
+        let second = null;
+
+
+        if (
+            this.match(",")
+        ) {
+
+            second =
+                this.parseExpression(
+                    new Set([
+                        "with"
+                    ])
+                );
+        }
+
+
+        this.consume(
+            "with",
+            "Erwartet 'with'."
+        );
+
+
+        this.match("rec");
+
+
+        const variable =
+            this.advance().value;
+
+
+        this.consume(
+            "do",
+            "Erwartet 'do'."
+        );
+
+
+        const body = [];
+
+
+        /*
+         * Wieder der wichtige Kommentar-Fix.
+         */
+
+        while (
+            this.current().type !==
+            TokenType.EOF
+        ) {
+
+            this.skipComments();
+
+
+            if (
+                this.check("exit")
+            ) {
+
+                break;
+            }
+
+
+            body.push(
+                this.statement()
+            );
+        }
+
+
+        this.consume(
+            "exit",
+            "Erwartet 'exit'."
+        );
+
+
+        this.consume(
+            ";",
+            "Erwartet ';' nach repeat."
+        );
+
+
+        return new ASTNode(
+            "Repeat",
+            {
+                first,
+                second,
+                variable,
+                body
+            }
+        );
+    }
+
+
+    /* =====================================================
+       EXPRESSION
+       ===================================================== */
+
+    parseExpressionStatement() {
+
+        const expression =
+            this.parseExpression(
+                new Set([";"])
+            );
+
+
+        this.consume(
+            ";",
+            "Erwartet ';' am Ende des Ausdrucks."
+        );
+
+
+        return new ASTNode(
+            "ExpressionStatement",
+            {
+                expression
+            }
+        );
+    }
+
+
+    parseExpression(stopTokens) {
+
+        const tokens = [];
+
+        let depth = 0;
+
+
+        while (
+            this.current().type !==
+            TokenType.EOF
+        ) {
+
+            const token =
+                this.current();
+
+
+            if (
+                depth === 0 &&
+                stopTokens.has(
+                    token.value
+                )
+            ) {
+
+                break;
+            }
+
+
+            if (
+                token.value === "(" ||
+                token.value === "{" ||
+                token.value === "["
+            ) {
+
+                depth++;
+            }
+
+
+            if (
+                token.value === ")" ||
+                token.value === "}" ||
+                token.value === "]"
+            ) {
+
+                depth--;
+            }
+
+
+            tokens.push(
+                this.advance()
+            );
+        }
+
+
+        return new ASTNode(
+            "Expression",
+            {
+                tokens
+            }
+        );
+    }
+}
+
+
+/* =========================================================
+   RUNTIME SIGNALS
+   ========================================================= */
+
+class ReturnSignal {
+
+    constructor(value) {
+
+        this.value = value;
+    }
+}
+
+
+class ExitSignal {}
+
+
+/* =========================================================
+   DEX RUNTIME
+   ========================================================= */
+
+class DEXRuntime {
+
+    constructor() {
+
+        this.globals = {};
+
+        this.functions = {};
+
+        this.output = [];
+
+        this.onWrite = null;
+
+        this.virtualFiles = {};
+
+        this.aliases = {};
+
+        this.pointer = [0, 0, false];
+
+        this.pointerClick = false;
+
+        this.ui = {
+            x: 16,
+            y: 16,
+            baseX: 16,
+            width: 240,
+            row: false,
+            gap: 8,
+            rowHeight: 0,
+            controls: []
+        };
+
+        this.installPointerTracking();
+    }
+
+
+    installPointerTracking() {
+
+        const canvas = document.getElementById("dexCanvas");
+
+        if (!canvas) return;
+
+        const updatePointer = event => {
+            const bounds = canvas.getBoundingClientRect();
+            this.pointer[0] = Math.round((event.clientX - bounds.left) * canvas.width / bounds.width);
+            this.pointer[1] = Math.round((event.clientY - bounds.top) * canvas.height / bounds.height);
+        };
+
+        canvas.addEventListener("pointermove", updatePointer);
+        canvas.addEventListener("pointerdown", event => {
+            updatePointer(event);
+            this.pointer[2] = true;
+            this.pointerClick = true;
+            void this.dispatchUiClick();
+        });
+        window.addEventListener("pointerup", () => { this.pointer[2] = false; });
+    }
+
+
+    /*
+     * Löst einen per "use ... as X;"
+     * vergebenen Alias auf den
+     * internen Modulnamen auf, z.B.
+     * "sysio" -> "io".
+     *
+     * Unbekannte Namen werden
+     * unverändert zurückgegeben.
+     */
+
+    resolveToken(name) {
+
+        if (
+            Object.prototype.hasOwnProperty.call(
+                this.aliases,
+                name
+            )
+        ) {
+
+            return this.aliases[
+                name
+            ];
+        }
+
+
+        return name;
+    }
+
+
+    resolveCanonicalModule(
+        path
+    ) {
+
+        const known = {
+            "system:io":"io",
+            "io":"io",
+            "dex:datatype":"dt",
+            "datatype":"dt",
+            "dex:dt":"dt",
+            "dex:text":"text",
+            "text":"text",
+            "dex:ui":"ui",
+            "ui":"ui"
+        };
+
+
+        if (
+            Object.prototype.hasOwnProperty.call(
+                known,
+                path
+            )
+        ) {
+
+            return known[
+                path
+            ];
+        }
+
+
+        const segments =
+            path.split(":");
+
+
+        return segments[
+            segments.length - 1
+        ];
+    }
+
+
+    registerUse(node) {
+
+        this.aliases[
+            node.alias
+        ] = this.resolveCanonicalModule(
+            node.module
+        );
+    }
+
+
+    write(value) {
+
+        const text = String(value);
+
+        this.output.push(text);
+
+        if (this.onWrite) {
+
+            this.onWrite(text);
+        }
+    }
+
+
+    getCanvasContext() {
+
+        const canvas =
+            document.getElementById(
+                "dexCanvas"
+            );
+
+
+        if (!canvas)
+            return null;
+
+
+        return canvas.getContext(
+            "2d"
+        );
+    }
+
+
+    recToStr(value) {
+
+        if (
+            value === null ||
+            value === undefined
+        ) {
+
+            return "void";
+        }
+
+
+        if (
+            Array.isArray(value)
+        ) {
+
+            return (
+                "{" +
+                value.join(",") +
+                "}"
+            );
+        }
+
+
+        return String(value);
+    }
+
+
+    uiNext(width, height) {
+
+        const position = { x: this.ui.x, y: this.ui.y };
+
+        if (this.ui.row) {
+            this.ui.x += width + this.ui.gap;
+            this.ui.rowHeight = Math.max(this.ui.rowHeight, height);
+        } else {
+            this.ui.y += height + this.ui.gap;
+        }
+
+        return position;
+    }
+
+
+    uiWasClicked(x, y, width, height) {
+
+        const inside = this.pointer[0] >= x && this.pointer[0] <= x + width &&
+            this.pointer[1] >= y && this.pointer[1] <= y + height;
+
+        if (inside && this.pointerClick) {
+            this.pointerClick = false;
+            return true;
+        }
+
+        return false;
+    }
+
+
+    async dispatchUiClick() {
+
+        for (const control of this.ui.controls) {
+
+            if (
+                this.pointer[0] >= control.x &&
+                this.pointer[0] <= control.x + control.width &&
+                this.pointer[1] >= control.y &&
+                this.pointer[1] <= control.y + control.height
+            ) {
+
+                if (control.handler && this.functions[control.handler]) {
+                    try {
+                        await this.callFunction(control.handler, []);
+                    } catch (error) {
+                        this.write("DEX UI ERROR: " + error.message);
+                    }
+                }
+
+                return;
+            }
+        }
+    }
+
+
+    uiButton(label, handler = null) {
+
+        const ctx = this.getCanvasContext();
+        const width = Math.max(90, String(label).length * 8 + 24);
+        const height = 32;
+        const position = this.uiNext(width, height);
+
+        this.ui.controls.push({
+            x: position.x,
+            y: position.y,
+            width,
+            height,
+            handler
+        });
+
+        if (!ctx) return false;
+
+        const hovered = this.pointer[0] >= position.x && this.pointer[0] <= position.x + width &&
+            this.pointer[1] >= position.y && this.pointer[1] <= position.y + height;
+        ctx.fillStyle = hovered ? "#d9ebff" : "#f1f3f5";
+        ctx.fillRect(position.x, position.y, width, height);
+        ctx.strokeStyle = "#58718d";
+        ctx.strokeRect(position.x, position.y, width, height);
+        ctx.fillStyle = "#20242b";
+        ctx.font = "14px sans-serif";
+        ctx.fillText(String(label), position.x + 12, position.y + 21);
+
+        return this.uiWasClicked(position.x, position.y, width, height);
+    }
+
+
+    /*
+     * Registriert ein eigenes
+     * Modul (top ... do ... exit top;).
+     *
+     * Funktionen und Variablen aus
+     * dem Modul werden unter dem
+     * Modulnamen erreichbar gemacht,
+     * z.B. math:sum(...).
+     */
+
+    qualify(
+        moduleName,
+        rawName
+    ) {
+
+        if (
+            rawName.includes(":")
+        ) {
+
+            return rawName;
+        }
+
+
+        return (
+            moduleName +
+            ":" +
+            rawName
+        );
+    }
+
+
+    registerTopModule(node) {
+
+        for (
+            const child of node.body
+        ) {
+
+            if (
+                child.type === "Function"
+            ) {
+
+                const qualifiedName =
+                    this.qualify(
+                        node.name,
+                        child.name
+                    );
+
+
+                this.functions[
+                    qualifiedName
+                ] = {
+                    ...child,
+                    name: qualifiedName
+                };
+
+
+                continue;
+            }
+
+
+            if (
+                child.type === "Variable"
+            ) {
+
+                const qualifiedName =
+                    this.qualify(
+                        node.name,
+                        child.name
+                    );
+
+
+                let value = null;
+
+
+                if (
+                    child.initializer
+                ) {
+
+                    value =
+                        this.evaluateExpression(
+                            child.initializer,
+                            this.globals
+                        );
+                }
+
+
+                this.globals[
+                    qualifiedName
+                ] = value;
+            }
+        }
+    }
+
+
+    async execute(program) {
+
+        /*
+         * Funktionen registrieren.
+         */
+
+        for (
+            const node of program.body
+        ) {
+
+            if (
+                node.type === "Function"
+            ) {
+
+                this.functions[
+                    node.name
+                ] = node;
+            }
+
+
+            if (
+                node.type === "TopModule"
+            ) {
+
+                this.registerTopModule(
+                    node
+                );
+            }
+
+
+            if (
+                node.type === "Use"
+            ) {
+
+                this.registerUse(
+                    node
+                );
+            }
+        }
+
+
+        /*
+         * Wenn main vorhanden ist,
+         * wird main ausgeführt.
+         */
+
+        if (
+            this.functions.main
+        ) {
+
+            await this.callFunction(
+                "main",
+                []
+            );
+
+            return;
+        }
+
+
+        /*
+         * Sonst globale Statements.
+         */
+
+        for (
+            const node of program.body
+        ) {
+
+            if (
+                node.type === "Function" ||
+                node.type === "Use" ||
+                node.type === "TopModule"
+            )
+                continue;
+
+
+            await this.executeNode(
+                node,
+                this.globals
+            );
+        }
+    }
+
+
+    async executeNode(
+        node,
+        env
+    ) {
+
+        switch (node.type) {
+
+            case "Variable": {
+
+                let value = null;
+
+
+                if (
+                    node.initializer
+                ) {
+
+                    value =
+                        this.evaluateExpression(
+                            node.initializer,
+                            env
+                        );
+                }
+
+
+                env[node.name] =
+                    value;
+
+                return;
+            }
+
+
+            case "ExpressionStatement":
+
+                await this.executeExpression(
+                    node.expression,
+                    env
+                );
+
+                return;
+
+
+            case "Return": {
+
+                const value =
+                    node.expression
+                        ? this.evaluateExpression(
+                            node.expression,
+                            env
+                        )
+                        : null;
+
+
+                throw new ReturnSignal(
+                    value
+                );
+            }
+
+
+            case "Exit":
+
+                throw new ExitSignal();
+
+
+            case "Repeat":
+
+                await this.executeRepeat(
+                    node,
+                    env
+                );
+
+                return;
+
+
+            case "If":
+
+                await this.executeIf(
+                    node,
+                    env
+                );
+
+                return;
+
+
+            case "Switch":
+
+                await this.executeSwitch(
+                    node,
+                    env
+                );
+
+                return;
+
+
+            default:
+
+                return;
+        }
+    }
+
+
+    async executeRepeat(
+        node,
+        env
+    ) {
+
+        /*
+         * repeat start,end
+         */
+
+        if (
+            node.second
+        ) {
+
+            const start =
+                this.evaluateExpression(
+                    node.first,
+                    env
+                );
+
+
+            const end =
+                this.evaluateExpression(
+                    node.second,
+                    env
+                );
+
+
+            for (
+                let i = start;
+                i <= end;
+                i++
+            ) {
+
+                env[
+                    node.variable
+                ] = i;
+
+
+                try {
+
+                    for (
+                        const statement
+                        of node.body
+                    ) {
+
+                        await this.executeNode(
+                            statement,
+                            env
+                        );
+                    }
+
+                } catch (error) {
+
+                    if (
+                        error instanceof ExitSignal
+                    ) {
+
+                        return;
+                    }
+
+
+                    throw error;
+                }
+            }
+
+
+            return;
+        }
+
+
+        /*
+         * repeat list
+         */
+
+        const list =
+            this.evaluateExpression(
+                node.first,
+                env
+            );
+
+
+        if (
+            !Array.isArray(list)
+        ) {
+
+            throw new Error(
+                "repeat erwartet eine Liste."
+            );
+        }
+
+
+        for (
+            const item of list
+        ) {
+
+            env[
+                node.variable
+            ] = item;
+
+
+            try {
+
+                for (
+                    const statement
+                    of node.body
+                ) {
+
+                    await this.executeNode(
+                        statement,
+                        env
+                    );
+                }
+
+            } catch (error) {
+
+                if (
+                    error instanceof ExitSignal
+                ) {
+
+                    return;
+                }
+
+
+                throw error;
+            }
+        }
+    }
+
+
+    async executeIf(
+        node,
+        env
+    ) {
+
+        const value =
+            this.evaluateExpression(
+                node.condition,
+                env
+            );
+
+
+        const body =
+            value
+                ? node.thenBody
+                : node.elseBody;
+
+
+        for (
+            const statement of body
+        ) {
+
+            await this.executeNode(
+                statement,
+                env
+            );
+        }
+    }
+
+
+    async executeSwitch(
+        node,
+        env
+    ) {
+
+        const value =
+            this.evaluateExpression(
+                node.subject,
+                env
+            );
+
+
+        for (
+            const branch of node.cases
+        ) {
+
+            const test =
+                this.evaluateExpression(
+                    branch.test,
+                    env
+                );
+
+
+            if (
+                test === value
+            ) {
+
+                for (
+                    const statement
+                    of branch.body
+                ) {
+
+                    await this.executeNode(
+                        statement,
+                        env
+                    );
+                }
+
+
+                return;
+            }
+        }
+
+
+        if (
+            node.defaultBody
+        ) {
+
+            for (
+                const statement
+                of node.defaultBody
+            ) {
+
+                await this.executeNode(
+                    statement,
+                    env
+                );
+            }
+        }
+    }
+
+
+    async callFunction(
+        name,
+        args
+    ) {
+
+        const fn =
+            this.functions[name];
+
+
+        if (!fn) {
+
+            throw new Error(
+                `Unbekannte Funktion '${name}'.`
+            );
+        }
+
+
+        if (
+            args.length !==
+            fn.parameters.length
+        ) {
+
+            throw new Error(
+                `Funktion '${name}' erwartet ` +
+                `${fn.parameters.length} Argument(e).`
+            );
+        }
+
+
+        const env = {
+            ...this.globals
+        };
+
+
+        fn.parameters.forEach(
+            (parameter,index) => {
+
+                env[parameter] =
+                    args[index];
+            }
+        );
+
+
+        try {
+
+            for (
+                const node of fn.body
+            ) {
+
+                await this.executeNode(
+                    node,
+                    env
+                );
+            }
+
+
+        } catch (error) {
+
+            if (
+                error instanceof ReturnSignal
+            ) {
+
+                return error.value;
+            }
+
+
+            if (
+                error instanceof ExitSignal
+            ) {
+
+                return null;
+            }
+
+
+            throw error;
+        }
+
+
+        /*
+         * exitNode kann ein
+         * "exit with" enthalten.
+         */
+
+        if (
+            fn.exitNode &&
+            fn.exitNode.type === "Return"
+        ) {
+
+            return this.evaluateExpression(
+                fn.exitNode.expression,
+                env
+            );
+        }
+
+
+        return null;
+    }
+
+
+    /*
+     * Funktionsaufrufe innerhalb eines Ausdrucks bleiben unmittelbar
+     * auswertbar (z.B. x << sum(2)). Die asynchrone Variante oben wird
+     * für den eigentlichen Programmablauf verwendet.
+     */
+    callFunctionSync(
+        name,
+        args
+    ) {
+
+        const fn = this.functions[name];
+
+        if (!fn) {
+
+            throw new Error(
+                `Unbekannte Funktion '${name}'.`
+            );
+        }
+
+        if (args.length !== fn.parameters.length) {
+
+            throw new Error(
+                `Funktion '${name}' erwartet ${fn.parameters.length} Argument(e).`
+            );
+        }
+
+        const env = { ...this.globals };
+
+        fn.parameters.forEach((parameter, index) => {
+
+            env[parameter] = args[index];
+        });
+
+        for (const node of fn.body) {
+
+            if (node.type === "Variable") {
+
+                env[node.name] = node.initializer
+                    ? this.evaluateExpression(node.initializer, env)
+                    : null;
+                continue;
+            }
+
+            if (node.type === "ExpressionStatement") {
+
+                this.executeExpressionSync(node.expression, env);
+            }
+        }
+
+        return fn.exitNode?.type === "Return"
+            ? this.evaluateExpression(fn.exitNode.expression, env)
+            : null;
+    }
+
+
+    executeExpressionSync(expression, env) {
+
+        const tokens = expression.tokens;
+        const assign = this.findTopLevelOperator(tokens, ">>");
+        const reverse = this.findTopLevelOperator(tokens, "<<");
+
+        if (assign >= 0 || reverse >= 0) {
+
+            const targetOnRight = assign >= 0;
+            const split = targetOnRight ? assign : reverse;
+            const valueTokens = targetOnRight
+                ? tokens.slice(0, split)
+                : tokens.slice(split + 1);
+            const targetTokens = targetOnRight
+                ? tokens.slice(split + 1)
+                : tokens.slice(0, split);
+            const variable = targetTokens.find(token =>
+                token.type === TokenType.IDENTIFIER
+            );
+
+            if (!variable) {
+
+                throw new Error("Ziel der Zuweisung fehlt.");
+            }
+
+            env[variable.value] = this.evaluateTokenExpression(valueTokens, env);
+            return;
+        }
+
+        return this.evaluateTokenExpression(tokens, env);
+    }
+
+
+    async executeExpression(
+        expression,
+        env
+    ) {
+
+        const tokens =
+            expression.tokens;
+
+
+        /*
+         * -------------------------------------------------
+         * io:out(...)
+         * -------------------------------------------------
+         */
+
+        if (
+            this.isCall(
+                tokens,
+                "io",
+                "out"
+            )
+        ) {
+
+            const args =
+                this.callArguments(
+                    tokens
+                );
+
+
+            const value =
+                this.evaluateTokenExpression(
+                    args[0] || [],
+                    env
+                );
+
+
+            this.write(
+                this.recToStr(value)
+            );
+
+
+            return;
+        }
+
+
+        /*
+         * -------------------------------------------------
+         * io:get(...)
+         * -------------------------------------------------
+         *
+         * Für die Browser-IDE wird prompt()
+         * verwendet.
+         */
+
+        if (
+            this.isCall(
+                tokens,
+                "io",
+                "get"
+            )
+        ) {
+
+            const args =
+                this.callArguments(
+                    tokens
+                );
+
+
+            let message = "";
+
+
+            if (
+                args[1]
+            ) {
+
+                message =
+                    this.recToStr(
+                        this.evaluateTokenExpression(
+                            args[1],
+                            env
+                        )
+                    );
+            }
+
+
+            const value =
+                window.prompt(
+                    message
+                );
+
+
+            /*
+             * Das Ergebnis von io:get wird
+             * von einer äußeren >> Zuweisung
+             * verarbeitet.
+             */
+
+            this.lastIOValue =
+                value;
+
+            return value;
+        }
+
+
+        /*
+         * io:delay(millis)
+         *
+         * Asynchrones Warten: Der Browser kann währenddessen die
+         * bereits erzeugte Ausgabe sichtbar machen.
+         */
+
+        if (
+            this.isCall(
+                tokens,
+                "io",
+                "delay"
+            )
+        ) {
+
+            const args =
+                this.callArguments(
+                    tokens
+                );
+
+
+            const millis =
+                this.evaluateTokenExpression(
+                    args[0],
+                    env
+                );
+
+
+            await new Promise(
+                resolve => setTimeout(
+                    resolve,
+                    Math.max(0, Number(millis) || 0)
+                )
+            );
+
+
+            return null;
+        }
+
+
+        /*
+         * Eigenständiger Aufruf einer DEX-Funktion.
+         *
+         * Dieser Pfad muss die asynchrone Funktionsausführung verwenden,
+         * damit Schleifen, Bühne und io:delay() innerhalb der Funktion
+         * vollständig abgearbeitet werden.
+         */
+        const directFunctionCall =
+            this.findSimpleFunctionCall(tokens) ||
+            this.findQualifiedFunctionCall(tokens);
+
+
+        if (
+            directFunctionCall &&
+            Object.prototype.hasOwnProperty.call(
+                this.functions,
+                directFunctionCall.name
+            )
+        ) {
+
+            const args = this.splitByComma(
+                directFunctionCall.args
+            ).filter(group => group.length > 0);
+
+            const values = args.map(
+                group => this.evaluateTokenExpression(group, env)
+            );
+
+            return await this.callFunction(
+                directFunctionCall.name,
+                values
+            );
+        }
+
+
+        /*
+         * -------------------------------------------------
+         * >>
+         * -------------------------------------------------
+         */
+
+        const assign =
+            this.findTopLevelOperator(
+                tokens,
+                ">>"
+            );
+
+
+        if (
+            assign >= 0
+        ) {
+
+            const left =
+                tokens.slice(
+                    0,
+                    assign
+                );
+
+
+            const right =
+                tokens.slice(
+                    assign + 1
+                );
+
+
+            const variable =
+                right.find(
+                    token =>
+                        token.type ===
+                        TokenType.IDENTIFIER
+                );
+
+
+            if (!variable) {
+
+                throw new Error(
+                    "Ziel der Zuweisung fehlt."
+                );
+            }
+
+
+            let value;
+
+
+            /*
+             * io:get() als linke Seite.
+             */
+
+            if (
+                this.isCall(
+                    left,
+                    "io",
+                    "get"
+                )
+            ) {
+
+                const args =
+                    this.callArguments(
+                        left
+                    );
+
+
+                let message = "";
+
+
+                if (
+                    args[1]
+                ) {
+
+                    message =
+                        this.recToStr(
+                            this.evaluateTokenExpression(
+                                args[1],
+                                env
+                            )
+                        );
+                }
+
+
+                value =
+                    window.prompt(
+                        message
+                    );
+
+            } else {
+
+                value =
+                    this.evaluateTokenExpression(
+                        left,
+                        env
+                    );
+            }
+
+
+            env[
+                variable.value
+            ] = value;
+
+
+            return;
+        }
+
+
+        /*
+         * <<
+         * -------------------------------------------------
+         */
+
+        const reverse =
+            this.findTopLevelOperator(
+                tokens,
+                "<<"
+            );
+
+
+        if (
+            reverse >= 0
+        ) {
+
+            const left =
+                tokens.slice(
+                    0,
+                    reverse
+                );
+
+
+            const right =
+                tokens.slice(
+                    reverse + 1
+                );
+
+
+            const variable =
+                left.find(
+                    token =>
+                        token.type ===
+                        TokenType.IDENTIFIER
+                );
+
+
+            if (!variable) {
+
+                throw new Error(
+                    "Ziel der Zuweisung fehlt."
+                );
+            }
+
+
+            env[
+                variable.value
+            ] =
+                this.evaluateTokenExpression(
+                    right,
+                    env
+                );
+
+
+            return;
+        }
+
+
+        return this.evaluateTokenExpression(
+            tokens,
+            env
+        );
+    }
+
+
+    evaluateExpression(
+        expression,
+        env
+    ) {
+
+        return this.evaluateTokenExpression(
+            expression.tokens,
+            env
+        );
+    }
+
+
+    evaluateTokenExpression(
+        tokens,
+        env
+    ) {
+
+        if (
+            !tokens.length
+        )
+            return null;
+
+
+        /*
+         * Äußere Klammern.
+         */
+
+        if (
+            tokens[0].value === "(" &&
+            tokens[tokens.length - 1].value === ")"
+        ) {
+
+            return this.evaluateTokenExpression(
+                tokens.slice(
+                    1,
+                    -1
+                ),
+                env
+            );
+        }
+
+
+        /*
+         * DEX-Liste:
+         *
+         * {1,2,3}
+         */
+
+        if (
+            tokens[0].value === "{" &&
+            tokens[tokens.length - 1].value === "}"
+        ) {
+
+            const groups =
+                this.splitByComma(
+                    tokens.slice(
+                        1,
+                        -1
+                    )
+                );
+
+
+            return groups.map(
+                group =>
+                    this.evaluateTokenExpression(
+                        group,
+                        env
+                    )
+            );
+        }
+
+
+        /*
+         * dt:recToStr(...)
+         */
+
+        if (
+            this.matchesQualifiedCall(
+                tokens,
+                [
+                    "dt",
+                    ":",
+                    "recToStr"
+                ]
+            )
+        ) {
+
+            const args =
+                this.callArguments(
+                    tokens
+                );
+
+
+            return this.recToStr(
+                this.evaluateTokenExpression(
+                    args[0],
+                    env
+                )
+            );
+        }
+
+
+        /*
+         * dt:listTools:returnItem(...)
+         */
+
+        if (
+            this.matchesQualifiedCall(
+                tokens,
+                [
+                    "dt",
+                    ":",
+                    "listTools",
+                    ":",
+                    "returnItem"
+                ]
+            )
+        ) {
+
+            const args =
+                this.callArguments(
+                    tokens
+                );
+
+
+            const list =
+                this.evaluateTokenExpression(
+                    args[0],
+                    env
+                );
+
+
+            const index =
+                this.evaluateTokenExpression(
+                    args[1],
+                    env
+                );
+
+
+            if (
+                !Array.isArray(list)
+            ) {
+
+                throw new Error(
+                    "returnItem erwartet eine Liste."
+                );
+            }
+
+
+            return list[index];
+        }
+
+
+        /* dt:list:* */
+        const listCall = ["setElement", "remove", "getElement", "connectLists"]
+            .find(name => this.matchesQualifiedCall(tokens, ["dt", ":", "list", ":", name]));
+
+        if (listCall) {
+
+            const args = this.callArguments(tokens);
+            const list = this.evaluateTokenExpression(args[0], env);
+
+            if (!Array.isArray(list)) {
+                throw new Error(`dt:list:${listCall} erwartet als erstes Argument eine Liste.`);
+            }
+
+            if (listCall === "setElement") {
+                const copy = [...list];
+                copy[this.evaluateTokenExpression(args[1], env)] = this.evaluateTokenExpression(args[2], env);
+                return copy;
+            }
+
+            if (listCall === "remove") {
+                const copy = [...list];
+                copy.splice(this.evaluateTokenExpression(args[1], env), 1);
+                return copy;
+            }
+
+            if (listCall === "getElement") {
+                return list[this.evaluateTokenExpression(args[1], env)];
+            }
+
+            const other = this.evaluateTokenExpression(args[1], env);
+            if (!Array.isArray(other)) {
+                throw new Error("dt:list:connectLists erwartet zwei Listen.");
+            }
+            return [...list, ...other];
+        }
+
+
+        /* dex:text: upper/lower; die Kurzform upper(...) ist ebenfalls erlaubt. */
+        const textCall =
+            this.matchesQualifiedCall(tokens, ["text", ":", "upper"]) ||
+            this.isBareBuiltinCall(tokens, "upper")
+                ? "upper"
+                : this.matchesQualifiedCall(tokens, ["text", ":", "lower"]) ||
+                    this.isBareBuiltinCall(tokens, "lower")
+                    ? "lower"
+                    : null;
+
+        if (textCall) {
+            const value = this.recToStr(this.evaluateTokenExpression(this.callArguments(tokens)[0] || [], env));
+            return textCall === "upper" ? value.toUpperCase() : value.toLowerCase();
+        }
+
+
+        if (this.matchesQualifiedCall(tokens, ["io", ":", "graphics", ":", "getPointer"])) {
+            return [...this.pointer];
+        }
+
+
+        /*
+         * io:file:write(name, inhalt)
+         */
+
+        if (
+            this.matchesQualifiedCall(
+                tokens,
+                [
+                    "io",
+                    ":",
+                    "file",
+                    ":",
+                    "write"
+                ]
+            )
+        ) {
+
+            const args =
+                this.callArguments(
+                    tokens
+                );
+
+
+            const name =
+                this.recToStr(
+                    this.evaluateTokenExpression(
+                        args[0],
+                        env
+                    )
+                );
+
+
+            const content =
+                this.recToStr(
+                    this.evaluateTokenExpression(
+                        args[1] || [],
+                        env
+                    )
+                );
+
+
+            this.virtualFiles[
+                name
+            ] = content;
+
+
+            const blob =
+                new Blob(
+                    [content],
+                    {
+                        type:
+                            "text/plain;charset=utf-8"
+                    }
+                );
+
+            const url =
+                URL.createObjectURL(
+                    blob
+                );
+
+            const link =
+                document.createElement(
+                    "a"
+                );
+
+            link.href = url;
+
+            link.download = name;
+
+            document.body.appendChild(
+                link
+            );
+
+            link.click();
+
+            link.remove();
+
+            URL.revokeObjectURL(
+                url
+            );
+
+
+            return true;
+        }
+
+
+        /*
+         * io:file:read(name)
+         *
+         * Liest eine Datei, die zuvor
+         * in diesem Programmlauf per
+         * io:file:write geschrieben
+         * wurde (virtueller Speicher,
+         * kein echter Dateizugriff im
+         * Browser möglich).
+         */
+
+        if (
+            this.matchesQualifiedCall(
+                tokens,
+                [
+                    "io",
+                    ":",
+                    "file",
+                    ":",
+                    "read"
+                ]
+            )
+        ) {
+
+            const args =
+                this.callArguments(
+                    tokens
+                );
+
+
+            const name =
+                this.recToStr(
+                    this.evaluateTokenExpression(
+                        args[0],
+                        env
+                    )
+                );
+
+
+            if (
+                Object.prototype.hasOwnProperty.call(
+                    this.virtualFiles,
+                    name
+                )
+            ) {
+
+                return this.virtualFiles[
+                    name
+                ];
+            }
+
+
+            return null;
+        }
+
+
+        /*
+         * io:file:exists(name)
+         */
+
+        if (
+            this.matchesQualifiedCall(
+                tokens,
+                [
+                    "io",
+                    ":",
+                    "file",
+                    ":",
+                    "exists"
+                ]
+            )
+        ) {
+
+            const args =
+                this.callArguments(
+                    tokens
+                );
+
+
+            const name =
+                this.recToStr(
+                    this.evaluateTokenExpression(
+                        args[0],
+                        env
+                    )
+                );
+
+
+            return Object.prototype.hasOwnProperty.call(
+                this.virtualFiles,
+                name
+            );
+        }
+
+
+        /* dex:ui – unmittelbares Layout auf der DEX-Bühne */
+        const uiCall = ["begin", "row", "column", "panel", "label", "button", "checkbox", "input", "spacer"]
+            .find(name => this.matchesQualifiedCall(tokens, ["ui", ":", name]));
+
+        if (uiCall) {
+            const args = this.callArguments(tokens);
+            const value = index => {
+                const argument = args[index] || [];
+
+                /*
+                 * UI-Zustand darf beim ersten Zeichnen noch nicht
+                 * existieren: checkbox("Aktiv", aktiv) >> aktiv;
+                 */
+                if (
+                    argument.length === 1 &&
+                    argument[0].type === TokenType.IDENTIFIER &&
+                    !Object.prototype.hasOwnProperty.call(env, argument[0].value)
+                ) {
+                    return null;
+                }
+
+                return this.evaluateTokenExpression(argument, env);
+            };
+            const ctx = this.getCanvasContext();
+
+            if (uiCall === "begin") {
+                this.ui.x = Number(value(0)) || 16;
+                this.ui.y = Number(value(1)) || 16;
+                this.ui.baseX = this.ui.x;
+                this.ui.width = Number(value(2)) || 240;
+                this.ui.row = false;
+                this.ui.rowHeight = 0;
+                this.ui.controls = [];
+                return null;
+            }
+
+            if (uiCall === "row") {
+                this.ui.row = true;
+                this.ui.rowHeight = 0;
+                return null;
+            }
+
+            if (uiCall === "column") {
+                if (this.ui.row) this.ui.y += this.ui.rowHeight + this.ui.gap;
+                this.ui.row = false;
+                this.ui.x = this.ui.baseX;
+                return null;
+            }
+
+            if (uiCall === "spacer") {
+                const size = Number(value(0)) || this.ui.gap;
+                if (this.ui.row) this.ui.x += size;
+                else this.ui.y += size;
+                return null;
+            }
+
+            if (uiCall === "button") {
+                const handlerTokens = args[1] || [];
+                const handler = handlerTokens.length === 1
+                    ? handlerTokens[0].type === TokenType.STRING
+                        ? this.decodeString(handlerTokens[0].value)
+                        : handlerTokens[0].value
+                    : null;
+
+                return this.uiButton(this.recToStr(value(0)), handler);
+            }
+
+            if (uiCall === "panel") {
+                const title = this.recToStr(value(0));
+                const width = Number(value(1)) || this.ui.width;
+                const height = Number(value(2)) || 80;
+                const position = this.uiNext(width, height);
+                if (ctx) {
+                    ctx.fillStyle = "#f8fafc";
+                    ctx.fillRect(position.x, position.y, width, height);
+                    ctx.strokeStyle = "#8ca0b3";
+                    ctx.strokeRect(position.x, position.y, width, height);
+                    ctx.fillStyle = "#39536e";
+                    ctx.font = "bold 14px sans-serif";
+                    ctx.fillText(title, position.x + 10, position.y + 21);
+                }
+                return null;
+            }
+
+            if (uiCall === "label") {
+                const text = this.recToStr(value(0));
+                const position = this.uiNext(this.ui.width, 22);
+                if (ctx) {
+                    ctx.fillStyle = "#20242b";
+                    ctx.font = "14px sans-serif";
+                    ctx.fillText(text, position.x, position.y + 16);
+                }
+                return null;
+            }
+
+            if (uiCall === "checkbox") {
+                const text = this.recToStr(value(0));
+                const checked = Boolean(value(1));
+                const position = this.uiNext(this.ui.width, 26);
+                if (ctx) {
+                    ctx.fillStyle = "white";
+                    ctx.fillRect(position.x, position.y + 3, 18, 18);
+                    ctx.strokeStyle = "#58718d";
+                    ctx.strokeRect(position.x, position.y + 3, 18, 18);
+                    if (checked) {
+                        ctx.fillStyle = "#1769aa";
+                        ctx.fillRect(position.x + 5, position.y + 8, 8, 8);
+                    }
+                    ctx.fillStyle = "#20242b";
+                    ctx.font = "14px sans-serif";
+                    ctx.fillText(text, position.x + 28, position.y + 18);
+                }
+                return this.uiWasClicked(position.x, position.y, this.ui.width, 26) ? !checked : checked;
+            }
+
+            if (uiCall === "input") {
+                const label = this.recToStr(value(0));
+                const inputValue = value(1);
+                const current = inputValue === null ? "" : this.recToStr(inputValue);
+                const position = this.uiNext(this.ui.width, 32);
+                if (ctx) {
+                    ctx.fillStyle = "white";
+                    ctx.fillRect(position.x, position.y, this.ui.width, 30);
+                    ctx.strokeStyle = "#58718d";
+                    ctx.strokeRect(position.x, position.y, this.ui.width, 30);
+                    ctx.fillStyle = "#20242b";
+                    ctx.font = "14px sans-serif";
+                    ctx.fillText(label + ": " + current, position.x + 8, position.y + 20);
+                }
+                return this.uiWasClicked(position.x, position.y, this.ui.width, 32)
+                    ? (window.prompt(label, current) ?? current)
+                    : current;
+            }
+        }
+
+
+        /*
+         * io:graphics:clear()
+         */
+
+        if (
+            this.matchesQualifiedCall(
+                tokens,
+                [
+                    "io",
+                    ":",
+                    "graphics",
+                    ":",
+                    "clear"
+                ]
+            )
+        ) {
+
+            const ctx =
+                this.getCanvasContext();
+
+
+            if (ctx) {
+
+                ctx.clearRect(
+                    0,
+                    0,
+                    ctx.canvas.width,
+                    ctx.canvas.height
+                );
+            }
+
+
+            return null;
+        }
+
+
+        /*
+         * io:graphics:rect(x,y,breite,hoehe,farbe)
+         */
+
+        if (
+            this.matchesQualifiedCall(
+                tokens,
+                [
+                    "io",
+                    ":",
+                    "graphics",
+                    ":",
+                    "rect"
+                ]
+            )
+        ) {
+
+            const args =
+                this.callArguments(
+                    tokens
+                );
+
+
+            const ctx =
+                this.getCanvasContext();
+
+
+            if (ctx) {
+
+                ctx.fillStyle =
+                    args[4]
+                        ? this.recToStr(
+                            this.evaluateTokenExpression(
+                                args[4],
+                                env
+                            )
+                        )
+                        : "#000000";
+
+
+                ctx.fillRect(
+                    this.evaluateTokenExpression(
+                        args[0],
+                        env
+                    ),
+                    this.evaluateTokenExpression(
+                        args[1],
+                        env
+                    ),
+                    this.evaluateTokenExpression(
+                        args[2],
+                        env
+                    ),
+                    this.evaluateTokenExpression(
+                        args[3],
+                        env
+                    )
+                );
+            }
+
+
+            return null;
+        }
+
+
+        /*
+         * io:graphics:circle(x,y,radius,farbe)
+         */
+
+        if (
+            this.matchesQualifiedCall(
+                tokens,
+                [
+                    "io",
+                    ":",
+                    "graphics",
+                    ":",
+                    "circle"
+                ]
+            )
+        ) {
+
+            const args =
+                this.callArguments(
+                    tokens
+                );
+
+
+            const ctx =
+                this.getCanvasContext();
+
+
+            if (ctx) {
+
+                const x =
+                    this.evaluateTokenExpression(
+                        args[0],
+                        env
+                    );
+
+                const y =
+                    this.evaluateTokenExpression(
+                        args[1],
+                        env
+                    );
+
+                const r =
+                    this.evaluateTokenExpression(
+                        args[2],
+                        env
+                    );
+
+
+                ctx.fillStyle =
+                    args[3]
+                        ? this.recToStr(
+                            this.evaluateTokenExpression(
+                                args[3],
+                                env
+                            )
+                        )
+                        : "#000000";
+
+
+                ctx.beginPath();
+
+                ctx.arc(
+                    x,
+                    y,
+                    r,
+                    0,
+                    Math.PI * 2
+                );
+
+                ctx.fill();
+            }
+
+
+            return null;
+        }
+
+
+        /*
+         * io:graphics:line(x1,y1,x2,y2,farbe)
+         */
+
+        if (
+            this.matchesQualifiedCall(
+                tokens,
+                [
+                    "io",
+                    ":",
+                    "graphics",
+                    ":",
+                    "line"
+                ]
+            )
+        ) {
+
+            const args =
+                this.callArguments(
+                    tokens
+                );
+
+
+            const ctx =
+                this.getCanvasContext();
+
+
+            if (ctx) {
+
+                ctx.strokeStyle =
+                    args[4]
+                        ? this.recToStr(
+                            this.evaluateTokenExpression(
+                                args[4],
+                                env
+                            )
+                        )
+                        : "#000000";
+
+
+                ctx.beginPath();
+
+                ctx.moveTo(
+                    this.evaluateTokenExpression(
+                        args[0],
+                        env
+                    ),
+                    this.evaluateTokenExpression(
+                        args[1],
+                        env
+                    )
+                );
+
+                ctx.lineTo(
+                    this.evaluateTokenExpression(
+                        args[2],
+                        env
+                    ),
+                    this.evaluateTokenExpression(
+                        args[3],
+                        env
+                    )
+                );
+
+                ctx.stroke();
+            }
+
+
+            return null;
+        }
+
+
+        /*
+         * io:graphics:text(x,y,text,farbe)
+         */
+
+        if (
+            this.matchesQualifiedCall(
+                tokens,
+                [
+                    "io",
+                    ":",
+                    "graphics",
+                    ":",
+                    "text"
+                ]
+            )
+        ) {
+
+            const args =
+                this.callArguments(
+                    tokens
+                );
+
+
+            const ctx =
+                this.getCanvasContext();
+
+
+            if (ctx) {
+
+                ctx.fillStyle =
+                    args[3]
+                        ? this.recToStr(
+                            this.evaluateTokenExpression(
+                                args[3],
+                                env
+                            )
+                        )
+                        : "#000000";
+
+                ctx.font =
+                    "14px sans-serif";
+
+
+                ctx.fillText(
+                    this.recToStr(
+                        this.evaluateTokenExpression(
+                            args[2],
+                            env
+                        )
+                    ),
+                    this.evaluateTokenExpression(
+                        args[0],
+                        env
+                    ),
+                    this.evaluateTokenExpression(
+                        args[1],
+                        env
+                    )
+                );
+            }
+
+
+            return null;
+        }
+
+
+        /*
+         * Variable aus eigenem Modul:
+         *
+         * math:nichtBenutzteVariable...
+         */
+
+        if (
+            tokens.length === 3 &&
+            tokens[0].type ===
+                TokenType.IDENTIFIER &&
+            tokens[1].value === ":" &&
+            tokens[2].type ===
+                TokenType.IDENTIFIER &&
+            Object.prototype.hasOwnProperty.call(
+                env,
+                this.resolveToken(
+                    tokens[0].value
+                ) +
+                    ":" +
+                    tokens[2].value
+            )
+        ) {
+
+            return env[
+                this.resolveToken(
+                    tokens[0].value
+                ) +
+                    ":" +
+                    tokens[2].value
+            ];
+        }
+
+
+        /*
+         * Funktionsaufruf
+         */
+
+        const functionCall =
+            this.findSimpleFunctionCall(
+                tokens
+            ) ||
+            this.findQualifiedFunctionCall(
+                tokens
+            );
+
+
+        if (
+            functionCall
+        ) {
+
+            const args =
+                this.splitByComma(
+                    functionCall.args
+                ).filter(
+                    group =>
+                        group.length > 0
+                );
+
+
+            const values =
+                args.map(
+                    group =>
+                        this.evaluateTokenExpression(
+                            group,
+                            env
+                        )
+                );
+
+
+            return this.callFunctionSync(
+                functionCall.name,
+                values
+            );
+        }
+
+
+        /*
+         * Einzelnes Token
+         */
+
+        if (
+            tokens.length === 1
+        ) {
+
+            const token =
+                tokens[0];
+
+
+            if (
+                token.type ===
+                TokenType.NUMBER
+            ) {
+
+                return Number(
+                    token.value
+                );
+            }
+
+
+            if (
+                token.type ===
+                TokenType.STRING
+            ) {
+
+                return this.decodeString(
+                    token.value
+                );
+            }
+
+
+            if (
+                token.value === "void"
+            ) {
+
+                return null;
+            }
+
+
+            if (
+                token.value === "true"
+            ) {
+
+                return true;
+            }
+
+
+            if (
+                token.value === "false"
+            ) {
+
+                return false;
+            }
+
+
+            if (
+                Object.prototype.hasOwnProperty.call(
+                    env,
+                    token.value
+                )
+            ) {
+
+                return env[
+                    token.value
+                ];
+            }
+        }
+
+
+        /*
+         * Einfache Arithmetik.
+         */
+
+        return this.evaluateArithmetic(
+            tokens,
+            env
+        );
+    }
+
+
+    evaluateArithmetic(
+        tokens,
+        env
+    ) {
+
+        /*
+         * Spezialfall:
+         *
+         * io:get(...)
+         */
+
+        if (
+            this.isCall(
+                tokens,
+                "io",
+                "get"
+            )
+        ) {
+
+            const args =
+                this.callArguments(
+                    tokens
+                );
+
+
+            let message = "";
+
+
+            if (
+                args[1]
+            ) {
+
+                message =
+                    this.recToStr(
+                        this.evaluateTokenExpression(
+                            args[1],
+                            env
+                        )
+                    );
+            }
+
+
+            return window.prompt(
+                message
+            );
+        }
+
+
+        let expression = "";
+
+
+        for (
+            const token of tokens
+        ) {
+
+            if (
+                token.type ===
+                TokenType.STRING
+            ) {
+
+                expression +=
+                    JSON.stringify(
+                        this.decodeString(
+                            token.value
+                        )
+                    );
+
+
+            } else if (
+                token.type ===
+                TokenType.NUMBER
+            ) {
+
+                expression +=
+                    token.value;
+
+
+            } else if (
+                Object.prototype.hasOwnProperty.call(
+                    env,
+                    token.value
+                )
+            ) {
+
+                expression +=
+                    JSON.stringify(
+                        env[token.value]
+                    );
+
+
+            } else if (
+                token.type ===
+                    TokenType.OPERATOR &&
+                (
+                    token.value === "=" ||
+                    token.value === "=="
+                )
+            ) {
+
+                expression +=
+                    "===";
+
+
+            } else if (
+                token.type ===
+                    TokenType.OPERATOR &&
+                token.value === "&"
+            ) {
+
+                expression +=
+                    "&&";
+
+
+            } else if (
+                token.type ===
+                    TokenType.OPERATOR &&
+                token.value === "|"
+            ) {
+
+                expression +=
+                    "||";
+
+
+            } else {
+
+                expression +=
+                    token.value;
+            }
+        }
+
+
+        /*
+         * Sicherheitsprüfung.
+         *
+         * Nur mathematische/logische
+         * Ausdruckszeichen erlauben.
+         */
+
+        if (
+            !/^[\w\s+\-*/%().,<>=!&|"'[\]]+$/
+                .test(expression)
+        ) {
+
+            throw new Error(
+                "Ungültiges Zeichen im Ausdruck."
+            );
+        }
+
+
+        try {
+
+            return Function(
+                `"use strict";return (${expression})`
+            )();
+
+        } catch {
+
+            throw new Error(
+                "Ausdruck konnte nicht ausgewertet werden."
+            );
+        }
+    }
+
+
+    isCall(
+        tokens,
+        module,
+        functionName
+    ) {
+
+        return (
+            tokens.length >= 5 &&
+            this.resolveToken(
+                tokens[0].value
+            ) === module &&
+            tokens[1].value === ":" &&
+            tokens[2].value === functionName &&
+            tokens[3].value === "(" &&
+            tokens[tokens.length - 1].value === ")"
+        );
+    }
+
+
+    isBareBuiltinCall(tokens, name) {
+
+        return (
+            tokens.length >= 3 &&
+            tokens[0].value === name &&
+            tokens[1].value === "(" &&
+            tokens[tokens.length - 1].value === ")"
+        );
+    }
+
+
+    matchesQualifiedCall(
+        tokens,
+        prefix
+    ) {
+
+        if (
+            tokens.length <=
+            prefix.length + 1
+        )
+            return false;
+
+
+        for (
+            let i = 0;
+            i < prefix.length;
+            i++
+        ) {
+
+            const expected =
+                prefix[i];
+
+            const actual =
+                i === 0
+                    ? this.resolveToken(
+                        tokens[i].value
+                    )
+                    : tokens[i].value;
+
+
+            if (
+                actual !== expected
+            ) {
+
+                return false;
+            }
+        }
+
+
+        return (
+            tokens[prefix.length].value === "(" &&
+            tokens[tokens.length - 1].value === ")"
+        );
+    }
+
+
+    findSimpleFunctionCall(
+        tokens
+    ) {
+
+        if (
+            tokens.length < 3
+        )
+            return null;
+
+
+        const open =
+            tokens.findIndex(
+                token =>
+                    token.value === "("
+            );
+
+
+        if (
+            open <= 0
+        )
+            return null;
+
+
+        if (
+            tokens[tokens.length - 1].value !== ")"
+        )
+            return null;
+
+
+        if (
+            open !== 1
+        )
+            return null;
+
+
+        const name =
+            tokens[0];
+
+
+        if (
+            name.type !==
+            TokenType.IDENTIFIER
+        )
+            return null;
+
+
+        return {
+            name:name.value,
+            args:tokens.slice(
+                open + 1,
+                -1
+            )
+        };
+    }
+
+
+    /*
+     * Erkennt Aufrufe eigener
+     * Modulfunktionen:
+     *
+     * math:sum(1,2)
+     */
+
+    findQualifiedFunctionCall(
+        tokens
+    ) {
+
+        if (
+            tokens.length < 5
+        )
+            return null;
+
+
+        if (
+            tokens[0].type !==
+                TokenType.IDENTIFIER ||
+            tokens[1].value !== ":" ||
+            tokens[2].type !==
+                TokenType.IDENTIFIER ||
+            tokens[3].value !== "("
+        )
+            return null;
+
+
+        if (
+            tokens[tokens.length - 1].value !== ")"
+        )
+            return null;
+
+
+        return {
+            name:
+                this.resolveToken(
+                    tokens[0].value
+                ) +
+                ":" +
+                tokens[2].value,
+            args:tokens.slice(
+                4,
+                -1
+            )
+        };
+    }
+
+
+    callArguments(
+        tokens
+    ) {
+
+        const open =
+            tokens.findIndex(
+                token =>
+                    token.value === "("
+            );
+
+
+        if (
+            open < 0
+        )
+            return [];
+
+
+        return this.splitByComma(
+            tokens.slice(
+                open + 1,
+                -1
+            )
+        );
+    }
+
+
+    findTopLevelOperator(
+        tokens,
+        operator
+    ) {
+
+        let depth = 0;
+
+
+        for (
+            let i = 0;
+            i < tokens.length;
+            i++
+        ) {
+
+            const value =
+                tokens[i].value;
+
+
+            if (
+                value === "(" ||
+                value === "{" ||
+                value === "["
+            ) {
+
+                depth++;
+            }
+
+
+            if (
+                value === ")" ||
+                value === "}" ||
+                value === "]"
+            ) {
+
+                depth--;
+            }
+
+
+            if (
+                depth === 0 &&
+                value === operator
+            ) {
+
+                return i;
+            }
+        }
+
+
+        return -1;
+    }
+
+
+    splitByComma(
+        tokens
+    ) {
+
+        const groups = [];
+
+        let current = [];
+
+        let depth = 0;
+
+
+        for (
+            const token of tokens
+        ) {
+
+            if (
+                token.value === "(" ||
+                token.value === "{" ||
+                token.value === "["
+            ) {
+
+                depth++;
+            }
+
+
+            if (
+                token.value === ")" ||
+                token.value === "}" ||
+                token.value === "]"
+            ) {
+
+                depth--;
+            }
+
+
+            if (
+                token.value === "," &&
+                depth === 0
+            ) {
+
+                groups.push(
+                    current
+                );
+
+                current = [];
+
+            } else {
+
+                current.push(
+                    token
+                );
+            }
+        }
+
+
+        groups.push(
+            current
+        );
+
+
+        return groups;
+    }
+
+
+    decodeString(
+        value
+    ) {
+
+        if (
+            value.startsWith('\"\"\"') &&
+            value.endsWith('\"\"\"')
+        ) {
+
+            return value.slice(3, -3);
+        }
+
+        if (
+            value.length >= 2
+        ) {
+
+            return value
+                .slice(
+                    1,
+                    -1
+                )
+                .replaceAll(
+                    "\\n",
+                    "\n"
+                )
+                .replaceAll(
+                    "\\t",
+                    "\t"
+                )
+                .replaceAll(
+                    "\\'",
+                    "'"
+                )
+                .replaceAll(
+                    '\\"',
+                    '"'
+                );
+        }
+
+
+        return value;
+    }
+}
+
+
+/* =========================================================
+   RUN DEX
+   ========================================================= */
+
+async function runDEX() {
+
+    output.className = "";
+
+    output.textContent =
+        "Kompiliere DEX...\n";
+
+
+    const canvas =
+        document.getElementById(
+            "dexCanvas"
+        );
+
+    canvas
+        .getContext("2d")
+        .clearRect(
+            0,
+            0,
+            canvas.width,
+            canvas.height
+        );
+
+
+    syncActiveTabFromEditor();
+
+
+    try {
+
+        /*
+         * Lexer
+         */
+
+        const lexer =
+            new DEXLexer(
+                editor.value
+            );
+
+
+        const tokens =
+            lexer.lex();
+
+
+        /*
+         * Parser
+         */
+
+        const parser =
+            new DEXParser(
+                tokens
+            );
+
+
+        const program =
+            parser.parse();
+
+
+        /*
+         * Runtime
+         */
+
+        const runtime =
+            new DEXRuntime();
+
+        output.textContent = "";
+
+        runtime.onWrite = value => {
+
+            output.textContent +=
+                (output.textContent ? "\n" : "") + value;
+
+            output.scrollTop = output.scrollHeight;
+        };
+
+
+        /*
+         * Module aus allen anderen
+         * gleichzeitig geöffneten
+         * Programmen (Tabs) laden,
+         * damit "top"-Module
+         * programübergreifend
+         * genutzt werden können.
+         */
+
+        loadExternalModules(
+            runtime,
+            activeTabId
+        );
+
+
+        await runtime.execute(
+            program
+        );
+
+
+        if (
+            runtime.output.length
+        ) {
+
+            output.textContent =
+                runtime.output.join(
+                    "\n"
+                );
+
+        } else {
+
+            output.textContent =
+                "Programm beendet.";
+        }
+
+
+        output.className =
+            "output-success";
+
+
+        status.textContent =
+            "Run erfolgreich";
+
+    } catch (error) {
+
+        output.textContent =
+            "DEX ERROR: " +
+            error.message;
+
+
+        output.className =
+            "output-error";
+
+
+        status.textContent =
+            "DEX Fehler";
+    }
+}
+
+
+/* =========================================================
+   MODULE AUS ANDEREN TABS
+   ========================================================= */
+
+function loadExternalModules(
+    runtime,
+    excludeTabId
+) {
+
+    for (
+        const tab of tabs
+    ) {
+
+        if (
+            tab.id === excludeTabId
+        )
+            continue;
+
+
+        try {
+
+            const lexer =
+                new DEXLexer(
+                    tab.content
+                );
+
+            const tokens =
+                lexer.lex();
+
+            const parser =
+                new DEXParser(
+                    tokens
+                );
+
+            const program =
+                parser.parse();
+
+
+            for (
+                const node of program.body
+            ) {
+
+                if (
+                    node.type === "TopModule"
+                ) {
+
+                    runtime.registerTopModule(
+                        node
+                    );
+                }
+            }
+
+        } catch (error) {
+
+            /*
+             * Fehlerhafte Programme in
+             * anderen Tabs sollen den
+             * aktuellen Run nicht
+             * blockieren - sie werden
+             * einfach übersprungen.
+             */
+
+            continue;
+        }
+    }
+}
+
+
+/* =========================================================
+   SYMBOLS
+   ========================================================= */
+
+function updateSymbols() {
+
+    symbols.innerHTML = "";
+
+
+    const lexer =
+        new DEXLexer(
+            editor.value
+        );
+
+
+    const tokens =
+        lexer.lex();
+
+
+    for (
+        let i = 0;
+        i < tokens.length;
+        i++
+    ) {
+
+        const token =
+            tokens[i];
+
+
+        /*
+         * Funktion (auch qualifiziert):
+         *
+         * rec name (
+         * rec modul:name (
+         */
+
+        if (
+            token.value === "rec" &&
+            tokens[i + 2]?.value === "("
+        ) {
+
+            const name =
+                tokens[i + 1];
+
+
+            addSymbol(
+                "function",
+                "ƒ " + name.value,
+                name.line
+            );
+
+
+            continue;
+        }
+
+
+        if (
+            token.value === "rec" &&
+            tokens[i + 2]?.value === ":" &&
+            tokens[i + 4]?.value === "("
+        ) {
+
+            addSymbol(
+                "function",
+                "ƒ " +
+                    tokens[i + 1].value +
+                    ":" +
+                    tokens[i + 3].value,
+                tokens[i + 1].line
+            );
+
+
+            continue;
+        }
+
+
+        /*
+         * Variable:
+         *
+         * rec item
+         */
+
+        if (
+            token.value === "rec" &&
+            tokens[i + 1]?.type ===
+                TokenType.IDENTIFIER &&
+            tokens[i + 2]?.value !== "(" &&
+            tokens[i + 2]?.value !== ":"
+        ) {
+
+            const name =
+                tokens[i + 1];
+
+
+            addSymbol(
+                "variable",
+                "▸ " + name.value,
+                name.line
+            );
+        }
+    }
+}
+
+
+function addSymbol(
+    type,
+    text,
+    line
+) {
+
+    const element =
+        document.createElement(
+            "div"
+        );
+
+
+    element.className =
+        "symbol " + type;
+
+
+    element.textContent =
+        text;
+
+
+    element.onclick = () => {
+
+        jumpToLine(
+            line
+        );
+    };
+
+
+    symbols.appendChild(
+        element
+    );
+}
+
+
+function jumpToLine(
+    line
+) {
+
+    const lineHeight =
+        14 * 1.55;
+
+
+    editor.focus();
+
+
+    editor.scrollTop =
+        Math.max(
+            0,
+            (line - 3) *
+            lineHeight
+        );
+}
+
+
+/* =========================================================
+   EDITOR UPDATE
+   ========================================================= */
+
+function updateLineNumbers() {
+
+    const lines =
+        editor.value.split(
+            "\n"
+        ).length;
+
+
+    let result = "";
+
+
+    for (
+        let i = 1;
+        i <= lines;
+        i++
+    ) {
+
+        result +=
+            i + "\n";
+    }
+
+
+    lineNumbers.textContent =
+        result;
+}
+
+
+function updateEditor() {
+
+    highlight.innerHTML =
+        highlightDEX(
+            editor.value
+        );
+
+
+    updateLineNumbers();
+
+    updateSymbols();
+
+
+    status.textContent =
+        `${editor.value.split("\n").length} Zeilen`;
+}
+
+
+editor.addEventListener(
+    "input",
+    updateEditor
+);
+
+
+/* =========================================================
+   SCROLL SYNC
+   ========================================================= */
+
+editor.addEventListener(
+    "scroll",
+    () => {
+
+        highlight.scrollTop =
+            editor.scrollTop;
+
+        highlight.scrollLeft =
+            editor.scrollLeft;
+
+        lineNumbers.scrollTop =
+            editor.scrollTop;
+    }
+);
+
+
+/* =========================================================
+   TAB SUPPORT
+   ========================================================= */
+
+editor.addEventListener(
+    "keydown",
+    event => {
+
+        if (
+            event.key === "Tab"
+        ) {
+
+            event.preventDefault();
+
+
+            const start =
+                editor.selectionStart;
+
+            const end =
+                editor.selectionEnd;
+
+
+            editor.value =
+                editor.value.slice(
+                    0,
+                    start
+                ) +
+                "    " +
+                editor.value.slice(
+                    end
+                );
+
+
+            editor.selectionStart =
+                editor.selectionEnd =
+                    start + 4;
+
+
+            updateEditor();
+        }
+
+
+        /*
+         * Ctrl + Enter
+         *
+         * Run
+         */
+
+        if (
+            event.ctrlKey &&
+            event.key === "Enter"
+        ) {
+
+            event.preventDefault();
+
+            runDEX();
+        }
+    }
+);
+
+
+/* =========================================================
+   NEW
+   ========================================================= */
+
+document.getElementById(
+    "newButton"
+).onclick = () => {
+
+    addTab();
+};
+
+
+/* =========================================================
+   SAVE
+   ========================================================= */
+
+document.getElementById(
+    "saveButton"
+).onclick = () => {
+
+    syncActiveTabFromEditor();
+
+
+    const blob =
+        new Blob(
+            [editor.value],
+            {
+                type:
+                    "text/plain;charset=utf-8"
+            }
+        );
+
+
+    const url =
+        URL.createObjectURL(
+            blob
+        );
+
+
+    const link =
+        document.createElement(
+            "a"
+        );
+
+
+    link.href =
+        url;
+
+    link.download =
+        activeTab().name;
+
+
+    document.body.appendChild(
+        link
+    );
+
+
+    link.click();
+
+
+    link.remove();
+
+
+    URL.revokeObjectURL(
+        url
+    );
+};
+
+
+/* =========================================================
+   OPEN
+   ========================================================= */
+
+document.getElementById(
+    "openButton"
+).onclick = () => {
+
+    document.getElementById(
+        "fileInput"
+    ).click();
+};
+
+
+document.getElementById(
+    "fileInput"
+).addEventListener(
+    "change",
+    event => {
+
+        const file =
+            event.target.files[0];
+
+
+        if (!file)
+            return;
+
+
+        const reader =
+            new FileReader();
+
+
+        reader.onload = () => {
+
+            addTab(
+                file.name,
+                reader.result
+            );
+
+
+            status.textContent =
+                file.name;
+        };
+
+
+        reader.readAsText(
+            file
+        );
+    }
+);
+
+
+/* =========================================================
+   RUN BUTTON
+   ========================================================= */
+
+document.getElementById(
+    "runButton"
+).onclick =
+    runDEX;
+
+
+/* =========================================================
+   INITIALIZE
+   ========================================================= */
+
+updateEditor();
+
+</script>
+
+</body>
+</html>
