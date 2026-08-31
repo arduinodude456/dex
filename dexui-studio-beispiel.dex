@@ -1,0 +1,54 @@
+use system:io as io;
+use dex:ui as ui;
+
+++ DEXUI Studio – ein Beispiel ohne Endlosschleife.
+++ Die Buttons bleiben nach Ende von main() aktiv.
+
+rec showProjekt() do
+    io:graphics:rect(42,246,396,45,"#dff3e7");
+    io:graphics:text(57,273,"Projekt geoeffnet – viel Spass beim Entwickeln!","#176b39");
+    io:out("Projektansicht geoeffnet.");
+    exit;
+
+rec showHilfe() do
+    io:graphics:rect(42,246,396,45,"#fff3cd");
+    io:graphics:text(57,273,"Tipp: Jede Schaltflaeche ruft eine DEX-Funktion auf.","#765c00");
+    io:out("Hilfe angefordert.");
+    exit;
+
+rec showInfo() do
+    io:graphics:rect(42,246,396,45,"#d9ebff");
+    io:graphics:text(57,273,"DEXUI 1.0 – Layout und Klick-Handler auf der Buehne.","#174f7f");
+    io:out("DEXUI-Information angezeigt.");
+    exit;
+
+rec main() do
+
+    ++ Hintergrund und Kopfbereich
+    io:graphics:clear();
+    io:graphics:rect(0,0,480,320,"#edf2f7");
+    io:graphics:rect(0,0,480,70,"#1769aa");
+    io:graphics:text(28,31,"DEXUI STUDIO","white");
+    io:graphics:text(28,53,"Deine kleine Oberflaeche fuer DEX-Projekte","#d9ebff");
+
+    ++ Linke Karte: Aktionen
+    ui:begin(42,92,185);
+    ui:panel("SCHNELLSTART",185,42);
+    ui:label("Was moechtest du tun?");
+    ui:button("Projekt oeffnen",showProjekt);
+    ui:button("Hilfe",showHilfe);
+
+    ++ Rechte Karte: Informationen
+    ui:begin(253,92,185);
+    ui:panel("DEXUI",185,42);
+    ui:label("Native Elemente");
+    ui:label("• Panels und Labels");
+    ui:label("• Zeilen und Spalten");
+    ui:label("• Klick-Handler");
+    ui:button("Mehr erfahren",showInfo);
+
+    ++ Statusbereich
+    io:graphics:rect(42,246,396,45,"white");
+    io:graphics:text(57,273,"Bereit – waehle eine Aktion.","#52616f");
+
+    exit;

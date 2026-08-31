@@ -791,7 +791,7 @@ button:hover {
                 Mehrzeilig: """Text…"""<br><br>
 
                 <b>dex:ui</b><br>
-                ui:begin(x,y,breite);<br>
+                ui:reset(); ui:begin(x,y,breite);<br>
                 ui:label(text); ui:button(text,handler);<br>
                 ui:checkbox(text,wert); ui:input(titel,wert);<br>
                 ui:row(); ui:column(); ui:panel(titel,b,h);
@@ -4902,7 +4902,7 @@ class DEXRuntime {
 
 
         /* dex:ui – unmittelbares Layout auf der DEX-Bühne */
-        const uiCall = ["begin", "row", "column", "panel", "label", "button", "checkbox", "input", "spacer"]
+        const uiCall = ["reset", "begin", "row", "column", "panel", "label", "button", "checkbox", "input", "spacer"]
             .find(name => this.matchesQualifiedCall(tokens, ["ui", ":", name]));
 
         if (uiCall) {
@@ -4926,6 +4926,11 @@ class DEXRuntime {
             };
             const ctx = this.getCanvasContext();
 
+            if (uiCall === "reset") {
+                this.ui.controls = [];
+                return null;
+            }
+
             if (uiCall === "begin") {
                 this.ui.x = Number(value(0)) || 16;
                 this.ui.y = Number(value(1)) || 16;
@@ -4933,7 +4938,6 @@ class DEXRuntime {
                 this.ui.width = Number(value(2)) || 240;
                 this.ui.row = false;
                 this.ui.rowHeight = 0;
-                this.ui.controls = [];
                 return null;
             }
 
